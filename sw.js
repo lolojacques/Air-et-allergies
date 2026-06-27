@@ -1,0 +1,1 @@
+/* Service Worker de base requis pour l'installation PWA */

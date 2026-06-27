@@ -1,0 +1,17 @@
+{
+  "name": "Nantes Pollen Météo",
+  "short_name": "Pollen Nantes",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#1a73e8",
+  "description": "Suivi des pollens de bouleau, graminées, de la qualité de l'air et de la météo à Nantes.",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3141/3141121.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
