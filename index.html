@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nantes Pollen Météo</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #202124;
+            margin: 0;
+            padding: 16px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        h1 { font-size: 22px; margin-bottom: 24px; color: #1a73e8; text-align: center; font-weight: 600; }
+        h2 { font-size: 16px; margin-top: 0; color: #3c4043; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px; font-weight: 600; }
+        .data-item { display: flex; justify-content: space-between; margin: 12px 0; font-size: 15px; }
+        .badge { padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 13px; }
+        .badge-danger { background-color: #fce8e6; color: #c5221f; }
+        .badge-success { background-color: #e6f4ea; color: #137333; }
+        .badge-neutral { background-color: #f1f3f4; color: #5f6368; }
+        .loader { text-align: center; color: #5f6368; font-style: italic; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>Nantes : Météo &amp; Environnement</h1>
+
+    <div id="loader" class="loader">Connexion aux stations nantaises...</div>
+
+    <div id="app-content" style="display: none;">
+        <div class="card">
+            <h2>Météo Actuelle (Nantes)</h2>
+            <div class="data-item">
+                <span>Température :</span>
+                <strong id="temp">-- °C</strong>
+            </div>
+            <div class="data-item">
+                <span>Vent :</span>
+                <strong id="wind">-- km/h</strong>
+            </div>
+            <div class="data-item">
+                <span>Pluie (dernière heure) :</span>
+                <strong id="rain">-- mm</strong>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Qualité de l'Air (Air Pays de la Loire)</h2>
+            <div class="data-item">
+                <span>Particules en suspension :</span>
+                <strong id="air-quality">-- µg/m³</strong>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Risque Allergique (Jardin des Plantes)</h2>
+            <div class="data-item">
+                <span>Bouleau (Betula) :</span>
+                <span id="pollen-bouleau" class="badge badge-neutral">Inconnu</span>
+            </div>
+            <div class="data-item">
+                <span>Graminées :</span>
+                <span id="pollen-graminees" class="badge badge-neutral">Inconnu</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enregistrement du Service Worker pour validation PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        async function loadData() {
+            try {
+                // 1. API Météo
+                const weatherFetch = fetch('https://api.open-meteo.com/v1/forecast?latitude=47.2184&longitude=-1.5536&current=temperature_2m,precipitation,wind_speed_10m');
+                
+                // 2. API Pollens Nantes Métropole
+                const pollenFetch = fetch('https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=50');
+                
+                // 3. API Air Pays de la Loire (via proxy de sécurité CORS obligatoire pour mobile)
+                const targetAirUrl = 'https://data.airpl.org/api/v1/mesure/journaliere/?code_configuration_de_mesure__code_point_de_prelevement__code_polluant=24&code_configuration_de_mesure__code_point_de_prelevement__code_station__code_commune__code_departement__in=44&limit=1&export=json';
+                const airFetch = fetch('https://corsproxy.io/?' + encodeURIComponent(targetAirUrl));
+
+                const [weatherRes, pollenRes, airRes] = await Promise.all([weatherFetch, pollenFetch, airFetch]);
+                
+                const weatherData = await weatherRes.json();
+                const pollenData = await pollenRes.json();
+                const airData = await airRes.json();
+
+                // MAJ Données Météo
+                document.getElementById('temp').innerText = `${weatherData.current.temperature_2m}°C`;
+                document.getElementById('wind').innerText = `${weatherData.current.wind_speed_10m} km/h`;
+                document.getElementById('rain').innerText = `${weatherData.current.precipitation} mm`;
+
+                // MAJ Données Qualité de l'Air
+                if (airData && airData.results && airData.results.length > 0) {
+                    const derniereMesure = airData.results[0].valeur; 
+                    document.getElementById('air-quality').innerText = `${derniereMesure} µg/m³`;
+                } else {
+                    document.getElementById('air-quality').innerText = "Indisponible";
+                }
+
+                // MAJ Données Pollens
+                let statutBouleau = "Pas d'émission";
+                let statutGraminees = "Pas d'émission";
+
+                if (pollenData.results) {
+                    pollenData.results.forEach(record => {
+                        const nom = record.nom_commun ? record.nom_commun.toLowerCase() : "";
+                        if (nom.includes("bouleau")) {
+                            statutBouleau = record.pret_a_emettre || "Pas d'émission";
+                        }
+                        if (nom.includes("graminée") || nom.includes("dactyle") || nom.includes("fléole")) {
+                            if (record.pret_a_emettre === "En cours") statutGraminees = "En cours";
+                        }
+                    });
+                }
+
+                updatePollenBadge('pollen-bouleau', statutBouleau);
+                updatePollenBadge('pollen-graminees', statutGraminees);
+
+                // Affichage de la page
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('loader').innerText = "Erreur de connexion aux API.";
+                console.error(error);
+            }
+        }
+
+        function updatePollenBadge(id, statut) {
+            const el = document.getElementById(id);
+            el.innerText = statut;
+            if (statut === "En cours") {
+                el.className = "badge badge-danger";
+            } else if (statut === "Pas commencé" || statut === "Pas d'émission" || statut === "Terminé") {
+                el.className = "badge badge-success";
+            } else {
+                el.className = "badge badge-neutral";
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
