@@ -55,7 +55,7 @@
         
         .clickable-card { cursor: pointer; user-select: none; }
 
-        /* Panneaux de détails masqués par défaut */
+        /* Panneaux de détails */
         .details-pane {
             max-height: 0;
             overflow: hidden;
@@ -67,13 +67,14 @@
         }
         .weather-details-pane { color: #041e49; border-top: 1px solid rgba(4, 30, 73, 0.1); }
         .air-details-pane { color: var(--text); border-top: 1px solid var(--bg); }
+        .pollen-details-pane { color: var(--text); border-top: 1px solid var(--bg); font-size: 12px; max-height: 0; overflow-y: auto; }
 
         .details-pane.open {
-            max-height: 250px;
+            max-height: 350px; /* Augmenté pour laisser la place aux logs */
             margin-top: 16px;
             padding-top: 12px;
         }
-        .detail-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
+        .detail-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; align-items: center; }
         .pollutant-sub { font-size: 11px; color: var(--text-sec); }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
@@ -102,6 +103,22 @@
         .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 80px; }
         .click-hint { font-size: 11px; color: rgba(4, 30, 73, 0.6); margin-top: 6px; font-style: italic; }
         .hint-sec { color: var(--text-sec); font-size: 10px; margin-top: 4px; }
+
+        /* Style de la zone de diagnostic/brut */
+        .debug-box {
+            background: #f8f9fa;
+            border: 1px dashed #dadce0;
+            border-radius: 8px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-height: 120px;
+            overflow-y: auto;
+            color: #3c4043;
+            margin-top: 4px;
+        }
+        .debug-title { font-weight: bold; color: var(--primary); margin-top: 6px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -145,29 +162,17 @@
                 </div>
             </div>
 
-            <!-- Volet de détails de l'air étendu (en dessous de la grille pour une belle mise en page) -->
+            <!-- Volet Air -->
             <div class="card details-pane air-details-pane" id="air-details-box" style="display:none; margin-top: -6px; margin-bottom: 12px;">
-                <div class="detail-row">
-                    <span>Ozone <span class="pollutant-sub">(O₃)</span> :</span>
-                    <span id="pol-o3" class="badge level-0">--</span>
-                </div>
-                <div class="detail-row">
-                    <span>Particules <span class="pollutant-sub">(PM10)</span> :</span>
-                    <span id="pol-pm10" class="badge level-0">--</span>
-                </div>
-                <div class="detail-row">
-                    <span>Particules fines <span class="pollutant-sub">(PM2.5)</span> :</span>
-                    <span id="pol-pm25" class="badge level-0">--</span>
-                </div>
-                <div class="detail-row">
-                    <span>Dioxyde d'Azote <span class="pollutant-sub">(NO₂)</span> :</span>
-                    <span id="pol-no2" class="badge level-0">--</span>
-                </div>
+                <div class="detail-row"><span>Ozone <span class="pollutant-sub">(O₃)</span> :</span><span id="pol-o3" class="badge level-0">--</span></div>
+                <div class="detail-row"><span>Particules <span class="pollutant-sub">(PM10)</span> :</span><span id="pol-pm10" class="badge level-0">--</span></div>
+                <div class="detail-row"><span>Particules fines <span class="pollutant-sub">(PM2.5)</span> :</span><span id="pol-pm25" class="badge level-0">--</span></div>
+                <div class="detail-row"><span>Dioxyde d'Azote <span class="pollutant-sub">(NO₂)</span> :</span><span id="pol-no2" class="badge level-0">--</span></div>
             </div>
             <div class="source-footer" id="air-source">Source : En attente...</div>
 
-            <!-- Risques Pollens -->
-            <div class="card">
+            <!-- Risques Pollens CLIQUABLE pour voir les données de diagnostic humaines -->
+            <div class="card clickable-card" onclick="togglePollenDetails()">
                 <div class="card-header">
                     <span class="card-icon">🌿</span>
                     <h2>Risques Allergiques</h2>
@@ -185,6 +190,16 @@
                         <div class="risk-bar-container"><div id="bar-graminees" class="risk-bar"></div></div>
                         <span id="txt-graminees" class="badge level-0">--</span>
                     </div>
+                </div>
+                <div class="click-hint hint-sec" id="pollen-hint" style="text-align: center;">👇 Touchez pour voir l'analyse brute des serveurs (Humain)</div>
+
+                <!-- Panneau d'inspection humaine des APIs -->
+                <div id="pollen-details-box" class="details-pane pollen-details-pane">
+                    <div class="debug-title">📡 Données Brutes Nantes Métropole :</div>
+                    <div class="debug-box" id="debug-nantes">Aucune donnée reçue.</div>
+                    
+                    <div class="debug-title">📡 Résumé Éco-Santé (RNSA) :</div>
+                    <div class="debug-box" id="debug-ecosante">Aucune donnée reçue.</div>
                 </div>
             </div>
             <div class="source-footer" id="pollen-source">Source : En attente...</div>
@@ -219,7 +234,6 @@
         function toggleAirDetails() {
             const box = document.getElementById('air-details-box');
             const hint = document.getElementById('air-hint');
-            
             if (box.style.display === 'none') {
                 box.style.display = 'flex';
                 setTimeout(() => box.classList.add('open'), 10);
@@ -229,6 +243,13 @@
                 hint.innerText = "👇 Détails polluants";
                 setTimeout(() => box.style.display = 'none', 300);
             }
+        }
+
+        function togglePollenDetails() {
+            const box = document.getElementById('pollen-details-box');
+            const hint = document.getElementById('pollen-hint');
+            box.classList.toggle('open');
+            hint.innerText = box.classList.contains('open') ? "👆 Fermer l'analyse brute" : "👇 Touchez pour voir l'analyse brute des serveurs (Humain)";
         }
 
         function getWeatherDetails(code) {
@@ -249,14 +270,23 @@
             let sourcesUsed = { air: "Inconnue", pollen: "Inconnue" };
             let weatherData, ecosanteData, nantesData, airplData;
 
+            // Diagnostic Text Holders
+            let nantesLog = "Erreur de connexion.";
+            let ecoLog = "Erreur de connexion.";
+
             try {
                 const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
                 const ecosanteFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${CONFIG.nantesCommuneCode}?format=json`));
                 
                 const [resW, resE] = await Promise.all([weatherFetch, ecosanteFetch]);
                 weatherData = await resW.json();
-                if (resE.ok) ecosanteData = await resE.json();
-            } catch(e) { console.error(e); }
+                if (resE.ok) {
+                    ecosanteData = await resE.json();
+                    ecoLog = JSON.stringify(ecosanteData.data?.pollen || "Aucun champ pollen trouvé dans Éco-Santé.", null, 2);
+                } else {
+                    ecoLog = `Serveur distant indisponible (Code HTTP ${resE.status})`;
+                }
+            } catch(e) { ecoLog = `Erreur : ${e.message}`; }
 
             try {
                 const nantesFetch = fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=30`);
@@ -264,11 +294,20 @@
                 const airplFetch = fetch('https://corsproxy.io/?' + encodeURIComponent(targetAirUrl));
 
                 const [resN, resA] = await Promise.all([nantesFetch, airplFetch]);
-                if (resN.ok) nantesData = await resN.json();
+                if (resN.ok) {
+                    nantesData = await resN.json();
+                    if(nantesData.results && nantesData.results.length > 0) {
+                        nantesLog = nantesData.results.map(r => `• ${r.nom_commun || 'Plante inconnue'} -> émission: ${r.pret_a_emettre || '?'}, maj: ${r.date_mise_a_jour || '?'}`).join("\n");
+                    } else { nantesLog = "Le fichier de Nantes Métropole est retourné vide (0 lignes)."; }
+                } else { nantesLog = `Serveur Open Data Nantes inaccessible (Code ${resN.status})`; }
                 if (resA.ok) airplData = await resA.json();
-            } catch(e) { console.error(e); }
+            } catch(e) { nantesLog = `Erreur Open Data : ${e.message}`; }
 
-            // ---- MÉTÉO ----
+            // Injection des textes bruts pour l'analyse humaine
+            document.getElementById('debug-nantes').innerText = nantesLog;
+            document.getElementById('debug-ecosante').innerText = ecoLog;
+
+            // ---- APPLICATION LOGIQUE APIS ----
             if (weatherData) {
                 const currentWeather = getWeatherDetails(weatherData.current.weather_code);
                 document.getElementById('main-temp').innerText = `${Math.round(weatherData.current.temperature_2m)}°C`;
@@ -281,22 +320,16 @@
                 document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
             }
 
-            // ---- QUALITÉ DE L'AIR & POLLUANTS ----
+            // ---- QUALITÉ DE L'AIR ----
             const airBadge = document.getElementById('air-badge');
-            
-            // Éléments du sous-panneau
-            const pO3 = document.getElementById('pol-o3');
-            const pPm10 = document.getElementById('pol-pm10');
-            const pPm25 = document.getElementById('pol-pm25');
-            const pNo2 = document.getElementById('pol-no2');
+            const pO3 = document.getElementById('pol-o3'); const pPm10 = document.getElementById('pol-pm10');
+            const pPm25 = document.getElementById('pol-pm25'); const pNo2 = document.getElementById('pol-no2');
 
             if (ecosanteData && ecosanteData.data && ecosanteData.data.air) {
                 const air = ecosanteData.data.air;
-                airBadge.innerText = air.label;
-                airBadge.className = `badge level-${air.value}`;
+                airBadge.innerText = air.label; airBadge.className = `badge level-${air.value}`;
                 sourcesUsed.air = "Réseau Éco-Santé (National)";
 
-                // Injection dynamique des indices spécifiques par polluant depuis Éco-Santé
                 if(air.details) {
                     air.details.forEach(p => {
                         const label = p.label ? p.label.toLowerCase() : "";
@@ -305,31 +338,24 @@
                         if(label.includes("pm10") || (label.includes("particules") && !label.includes("2.5"))) targetBadge = pPm10;
                         if(label.includes("pm2.5") || label.includes("2,5")) targetBadge = pPm25;
                         if(label.includes("azote")) targetBadge = pNo2;
-
-                        if(targetBadge) {
-                            targetBadge.innerText = p.qualification || "Moyen";
-                            targetBadge.className = `badge level-${p.value || 'moyen'}`;
-                        }
+                        if(targetBadge) { targetBadge.innerText = p.qualification || "Moyen"; targetBadge.className = `badge level-${p.value || 'moyen'}`; }
                     });
                 }
             } else if (airplData && airplData.results && airplData.results.length > 0) {
                 const val = airplData.results[0].valeur;
                 let lvl = 1; if(val > 20) lvl=2; if(val > 40) lvl=3; if(val > 50) lvl=4; if(val > 80) lvl=5;
-                airBadge.innerText = `${Math.round(val)} µg/m³`;
-                airBadge.className = `badge level-${lvl}`;
+                airBadge.innerText = `${Math.round(val)} µg/m³`; airBadge.className = `badge level-${lvl}`;
                 sourcesUsed.air = "Air Pays de la Loire (PM10)";
-                
-                pO3.innerText = "Normal"; pO3.className = "badge level-bon";
+                pO3.innerText = "Suivi"; pO3.className = "badge level-bon";
                 pPm10.innerText = `${Math.round(val)} µg/m³`; pPm10.className = `badge level-${lvl}`;
-                pPm25.innerText = "Suivi global"; pPm25.className = "badge level-moyen";
+                pPm25.innerText = "Global"; pPm25.className = "badge level-moyen";
                 pNo2.innerText = "Faible"; pNo2.className = "badge level-bon";
             } else {
-                airBadge.innerText = "Normal"; airBadge.className = "badge level-2";
-                sourcesUsed.air = "Estimation Climatique";
+                airBadge.innerText = "Normal"; airBadge.className = "badge level-2"; sourcesUsed.air = "Estimation Climatique";
             }
             document.getElementById('air-source').innerText = `Source : ${sourcesUsed.air}`;
 
-            // ---- POLLENS ----
+            // ---- ANALYSE ALGORITHMIQUE DES POLLENS ----
             let risqueBouleau = null; let risqueGraminees = null;
             if (ecosanteData && ecosanteData.data && ecosanteData.data.pollen && ecosanteData.data.pollen.species) {
                 ecosanteData.data.pollen.species.forEach(sp => {
@@ -344,9 +370,11 @@
                 sourcesUsed.pollen = "Pollinarium Sentinelle de Nantes";
                 nantesData.results.forEach(rec => {
                     const nom = rec.nom_commun ? rec.nom_commun.toLowerCase() : "";
-                    const enCours = rec.pret_a_emettre === "En cours";
+                    const enCours = rec.pret_a_emettre === "En cours" || rec.pret_a_emettre === "Oui" || rec.pret_a_emettre === "vrai";
                     if (nom.includes("bouleau")) risqueBouleau = enCours ? 4 : 1; 
-                    if (nom.includes("graminée")) if (enCours) risqueGraminees = 4;
+                    if (nom.includes("graminée") || nom.includes("dactyle") || nom.includes("fléole")) {
+                        if (enCours) risqueGraminees = 4;
+                    }
                 });
             }
 
@@ -354,7 +382,7 @@
             if (risqueGraminees === null) {
                 const mois = new Date().getMonth();
                 if ((mois === 4 || mois === 5) && weatherData && weatherData.current.temperature_2m > 22) {
-                    risqueGraminees = 3; sourcesUsed.pollen = "Modèle Saisonnier";
+                    risqueGraminees = 3; sourcesUsed.pollen = "Modèle Saisonnier Historique";
                 } else { risqueGraminees = 0; }
             }
 
@@ -364,8 +392,7 @@
 
             // ---- PRÉVISIONS ----
             if (weatherData && weatherData.daily) {
-                const container = document.getElementById('forecast-container');
-                container.innerHTML = "";
+                const container = document.getElementById('forecast-container'); container.innerHTML = "";
                 const jours = ["Demain", "Après-demain", "J+3"];
                 for (let i = 1; i <= 3; i++) {
                     const max = Math.round(weatherData.daily.temperature_2m_max[i]);
@@ -382,7 +409,7 @@
             }
 
             document.getElementById('loader').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('app-content').style.display = 'grid';
         }
 
         function setupPollenRow(id, value) {
@@ -390,15 +417,11 @@
             const txt = document.getElementById(`txt-${id}`);
             const labels = ["Nul", "Très Faible", "Faible", "Modéré", "Fort", "Très Fort"];
             const val = Math.min(Math.max(value, 0), 5);
-            bar.style.width = `${(val / 5) * 100}%`;
-            bar.className = `risk-bar level-${val}`;
-            txt.innerText = labels[val];
-            txt.className = `badge level-${val}`;
+            bar.style.width = `${(val / 5) * 100}%`; bar.className = `risk-bar level-${val}`;
+            txt.innerText = labels[val]; txt.className = `badge level-${val}`;
         }
 
         loadData();
     </script>
 </body>
 </html>
-
-```
