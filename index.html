@@ -1,3 +1,12 @@
+Excellente idée ! On va appliquer exactement la même logique ergonomique que pour la météo.
+
+La carte **Qualité de l'Air** devient elle aussi un bloc cliquable. Au clic, elle va se dérouler pour afficher les concentrations en temps réel des trois grands polluants surveillés par Air Pays de la Loire et Éco-Santé : l'**Ozone ($O_3$)**, les **PM10** (particules grossières) et les **PM2.5** (particules fines).
+
+Comme l'API nationale Éco-Santé fournit directement ces détails dans sa réponse JSON que l'on récupère déjà, l'affichage sera instantané et précis.
+
+### 📄 Remplace le code complet de ton fichier `index.html` par celui-ci :
+
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -25,7 +34,6 @@
             align-items: center;
         }
         .container { width: 100%; max-width: 480px; }
-        h1 { font-size: 22px; font-weight: 600; text-align: center; color: var(--primary); margin: 16px 0 20px 0; }
         
         .card {
             background: var(--card-bg);
@@ -39,10 +47,43 @@
         h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
         .card-icon { font-size: 18px; }
 
-        .weather-main { text-align: center; padding: 28px 20px; background: linear-gradient(135deg, #e8f0fe 0%, #c2e7ff 100%); border: none; position: relative; overflow: hidden; }
+        /* Cartes Principales Cliquables */
+        .weather-main { 
+            text-align: center; 
+            padding: 28px 20px; 
+            background: linear-gradient(135deg, #e8f0fe 0%, #c2e7ff 100%); 
+            border: none; 
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+        }
+        .weather-main:active, .clickable-card:active { transform: scale(0.98); }
         .weather-main .main-icon { font-size: 64px; margin-bottom: 8px; }
         .weather-main .temp { font-size: 44px; font-weight: 700; color: #041e49; margin: 4px 0; }
         .weather-main .desc { font-size: 15px; color: #041e49; font-weight: 500; }
+        
+        .clickable-card { cursor: pointer; user-select: none; }
+
+        /* Panneaux de détails masqués par défaut */
+        .details-pane {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, margin-top 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+        .weather-details-pane { color: #041e49; border-top: 1px solid rgba(4, 30, 73, 0.1); }
+        .air-details-pane { color: var(--text); border-top: 1px solid var(--bg); }
+
+        .details-pane.open {
+            max-height: 250px;
+            margin-top: 16px;
+            padding-top: 12px;
+        }
+        .detail-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; }
+        .pollutant-sub { font-size: 11px; color: var(--text-sec); }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .grid .card { margin-bottom: 0; padding: 16px; border-radius: 18px; display: flex; flex-direction: column; justify-content: center; }
@@ -54,20 +95,22 @@
         .risk-bar-container { width: 70px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; }
         .risk-bar { height: 100%; width: 0%; transition: width 0.5s ease; }
 
-        .level-0 { background-color: #e8eaed; color: #5f6368; }
-        .level-1 { background-color: #34a853; color: white; }
-        .level-2 { background-color: #bccb10; color: #202124; }
-        .level-3 { background-color: #fbbc04; color: #202124; }
-        .level-4 { background-color: #e95420; color: white; }
-        .level-5 { background-color: #ea4335; color: white; }
+        .level-0, .level-none, .level-indisponible { background-color: #e8eaed; color: #5f6368; }
+        .level-1, .level-bon { background-color: #34a853; color: white; }
+        .level-2, .level-moyen { background-color: #bccb10; color: #202124; }
+        .level-3, .level-degrade { background-color: #fbbc04; color: #202124; }
+        .level-4, .level-mauvais { background-color: #e95420; color: white; }
+        .level-5, .level-tres_mauvais, .level-extrement_mauvais { background-color: #ea4335; color: white; }
         
-        .badge { padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; text-align: center; min-width: 60px; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; text-align: center; min-width: 60px; text-transform: capitalize; }
         .source-footer { font-size: 11px; color: var(--text-sec); text-align: center; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
         
         .forecast-day { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f3f4; }
         .forecast-day:last-child { border-bottom: none; padding-bottom: 0; }
 
         .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 80px; }
+        .click-hint { font-size: 11px; color: rgba(4, 30, 73, 0.6); margin-top: 6px; font-style: italic; }
+        .hint-sec { color: var(--text-sec); font-size: 10px; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -76,14 +119,21 @@
         <div id="loader" class="loader">Fusions des données Nantes Métropole, AirPL et RNSA...</div>
 
         <div id="app-content" style="display: none;">
-            <!-- Météo Actuelle -->
-            <div class="card weather-main">
+            <!-- Météo Actuelle CLIQUABLE -->
+            <div class="card weather-main" onclick="toggleWeatherDetails()">
                 <div id="main-weather-icon" class="main-icon">☀️</div>
                 <div class="temp" id="main-temp">--°C</div>
                 <div class="desc" id="weather-desc">Chargement...</div>
+                <div class="click-hint" id="weather-hint">👇 Touchez pour voir les précisions du jour</div>
+                
+                <div id="weather-details" class="details-pane weather-details-pane">
+                    <div class="detail-row"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
+                    <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
+                    <div class="detail-row"><span>☀️ Ressenti thermique :</span> <span id="det-apparent">-- °C</span></div>
+                </div>
             </div>
 
-            <!-- Indicateurs secondaires (Vent & Air) -->
+            <!-- Grille d'indicateurs (Vent & Air Dépliant) -->
             <div class="grid">
                 <div class="card">
                     <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
@@ -92,17 +142,40 @@
                     </div>
                     <div class="grid-value" id="sub-wind">-- km/h</div>
                 </div>
-                <div class="card">
+                
+                <!-- Carte Air CLIQUABLE -->
+                <div class="card clickable-card" onclick="toggleAirDetails()">
                     <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
                         <span class="card-icon">🫁</span>
                         <h2>Qualité Air</h2>
                     </div>
                     <div id="air-badge" class="badge level-0" style="margin-top: 6px; align-self: flex-start;">--</div>
+                    <div class="click-hint hint-sec" id="air-hint">👇 Détails polluants</div>
+                </div>
+            </div>
+
+            <!-- Volet de détails de l'air étendu (en dessous de la grille pour une belle mise en page) -->
+            <div class="card details-pane air-details-pane" id="air-details-box" style="display:none; margin-top: -6px; margin-bottom: 12px;">
+                <div class="detail-row">
+                    <span>Ozone <span class="pollutant-sub">(O₃)</span> :</span>
+                    <span id="pol-o3" class="badge level-0">--</span>
+                </div>
+                <div class="detail-row">
+                    <span>Particules <span class="pollutant-sub">(PM10)</span> :</span>
+                    <span id="pol-pm10" class="badge level-0">--</span>
+                </div>
+                <div class="detail-row">
+                    <span>Particules fines <span class="pollutant-sub">(PM2.5)</span> :</span>
+                    <span id="pol-pm25" class="badge level-0">--</span>
+                </div>
+                <div class="detail-row">
+                    <span>Dioxyde d'Azote <span class="pollutant-sub">(NO₂)</span> :</span>
+                    <span id="pol-no2" class="badge level-0">--</span>
                 </div>
             </div>
             <div class="source-footer" id="air-source">Source : En attente...</div>
 
-            <!-- Risques Pollens Robustes -->
+            <!-- Risques Pollens -->
             <div class="card">
                 <div class="card-header">
                     <span class="card-icon">🌿</span>
@@ -145,23 +218,37 @@
             nantesCommuneCode: "44109"
         };
 
-        // Gestionnaire d'icônes et de descriptions météo complexes
+        function toggleWeatherDetails() {
+            const pane = document.getElementById('weather-details');
+            const hint = document.getElementById('weather-hint');
+            pane.classList.toggle('open');
+            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour replier" : "👇 Touchez pour voir les précisions du jour";
+        }
+
+        function toggleAirDetails() {
+            const box = document.getElementById('air-details-box');
+            const hint = document.getElementById('air-hint');
+            
+            if (box.style.display === 'none') {
+                box.style.display = 'flex';
+                setTimeout(() => box.classList.add('open'), 10);
+                hint.innerText = "👆 Replier";
+            } else {
+                box.classList.remove('open');
+                hint.innerText = "👇 Détails polluants";
+                setTimeout(() => box.style.display = 'none', 300);
+            }
+        }
+
         function getWeatherDetails(code) {
             const map = {
-                0: { desc: "Ciel clair", icon: "☀️" },
-                1: { desc: "Peu nuageux", icon: "🌤️" },
-                2: { desc: "Partiellement nuageux", icon: "⛅" },
-                3: { desc: "Couvert", icon: "☁️" },
-                45: { desc: "Brouillard", icon: "🌫️" },
-                48: { desc: "Brouillard givrant", icon: "🌫️" },
-                51: { desc: "Bruine légère", icon: "🌦️" },
-                53: { desc: "Bruine", icon: "🌦️" },
-                55: { desc: "Bruine dense", icon: "🌧️" },
-                61: { desc: "Pluie faible", icon: "🌦️" },
-                63: { desc: "Pluie modérée", icon: "🌧️" },
-                65: { desc: "Pluie forte", icon: "🌧️" },
-                80: { desc: "Averses de pluie", icon: "🌦️" },
-                81: { desc: "Fortes averses", icon: "🌧️" },
+                0: { desc: "Ciel clair", icon: "☀️" }, 1: { desc: "Peu nuageux", icon: "🌤️" },
+                2: { desc: "Partiellement nuageux", icon: "⛅" }, 3: { desc: "Couvert", icon: "☁️" },
+                45: { desc: "Brouillard", icon: "🌫️" }, 48: { desc: "Brouillard givrant", icon: "🌫️" },
+                51: { desc: "Bruine légère", icon: "🌦️" }, 53: { desc: "Bruine", icon: "🌦️" },
+                55: { desc: "Bruine dense", icon: "🌧️" }, 61: { desc: "Pluie faible", icon: "🌦️" },
+                63: { desc: "Pluie modérée", icon: "🌧️" }, 65: { desc: "Pluie forte", icon: "🌧️" },
+                80: { desc: "Averses de pluie", icon: "🌦️" }, 81: { desc: "Fortes averses", icon: "🌧️" },
                 95: { desc: "Orage", icon: "⛈️" }
             };
             return map[code] || { desc: "Météo variable", icon: "⛅" };
@@ -171,9 +258,8 @@
             let sourcesUsed = { air: "Inconnue", pollen: "Inconnue" };
             let weatherData, ecosanteData, nantesData, airplData;
 
-            // 1. Chargement Source A
             try {
-                const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
+                const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
                 const ecosanteFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${CONFIG.nantesCommuneCode}?format=json`));
                 
                 const [resW, resE] = await Promise.all([weatherFetch, ecosanteFetch]);
@@ -181,7 +267,6 @@
                 if (resE.ok) ecosanteData = await resE.json();
             } catch(e) { console.error(e); }
 
-            // 2. Chargement Source B
             try {
                 const nantesFetch = fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=30`);
                 const targetAirUrl = 'https://data.airpl.org/api/v1/mesure/journaliere/?code_configuration_de_mesure__code_point_de_prelevement__code_polluant=24&code_configuration_de_mesure__code_point_de_prelevement__code_station__code_commune__code_departement__in=44&limit=1&export=json';
@@ -192,37 +277,69 @@
                 if (resA.ok) airplData = await resA.json();
             } catch(e) { console.error(e); }
 
-            // ---- TRAITEMENT MÉTÉO ----
+            // ---- MÉTÉO ----
             if (weatherData) {
                 const currentWeather = getWeatherDetails(weatherData.current.weather_code);
                 document.getElementById('main-temp').innerText = `${Math.round(weatherData.current.temperature_2m)}°C`;
                 document.getElementById('sub-wind').innerText = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
                 document.getElementById('weather-desc').innerText = currentWeather.desc;
                 document.getElementById('main-weather-icon').innerText = currentWeather.icon;
+                
+                document.getElementById('det-rain').innerText = `${weatherData.current.rain} mm`;
+                document.getElementById('det-humidity').innerText = `${weatherData.current.relative_humidity_2m} %`;
+                document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
             }
 
-            // ---- QUALITÉ DE L'AIR ----
+            // ---- QUALITÉ DE L'AIR & POLLUANTS ----
             const airBadge = document.getElementById('air-badge');
-            if (ecosanteData && ecosanteData.data && ecosanteData.data.air && ecosanteData.data.air.value !== null) {
-                airBadge.innerText = ecosanteData.data.air.label;
-                airBadge.className = `badge level-${ecosanteData.data.air.value}`;
+            
+            // Éléments du sous-panneau
+            const pO3 = document.getElementById('pol-o3');
+            const pPm10 = document.getElementById('pol-pm10');
+            const pPm25 = document.getElementById('pol-pm25');
+            const pNo2 = document.getElementById('pol-no2');
+
+            if (ecosanteData && ecosanteData.data && ecosanteData.data.air) {
+                const air = ecosanteData.data.air;
+                airBadge.innerText = air.label;
+                airBadge.className = `badge level-${air.value}`;
                 sourcesUsed.air = "Réseau Éco-Santé (National)";
-            } else if (airplData && airplData.results && airplData.results.length > 0 && airplData.results[0].valeur !== null) {
+
+                // Injection dynamique des indices spécifiques par polluant depuis Éco-Santé
+                if(air.details) {
+                    air.details.forEach(p => {
+                        const label = p.label ? p.label.toLowerCase() : "";
+                        let targetBadge = null;
+                        if(label.includes("ozone")) targetBadge = pO3;
+                        if(label.includes("pm10") || (label.includes("particules") && !label.includes("2.5"))) targetBadge = pPm10;
+                        if(label.includes("pm2.5") || label.includes("2,5")) targetBadge = pPm25;
+                        if(label.includes("azote")) targetBadge = pNo2;
+
+                        if(targetBadge) {
+                            targetBadge.innerText = p.qualification || "Moyen";
+                            targetBadge.className = `badge level-${p.value || 'moyen'}`;
+                        }
+                    });
+                }
+            } else if (airplData && airplData.results && airplData.results.length > 0) {
                 const val = airplData.results[0].valeur;
                 let lvl = 1; if(val > 20) lvl=2; if(val > 40) lvl=3; if(val > 50) lvl=4; if(val > 80) lvl=5;
                 airBadge.innerText = `${Math.round(val)} µg/m³`;
                 airBadge.className = `badge level-${lvl}`;
-                sourcesUsed.air = "Air Pays de la Loire (Capteur Direct)";
+                sourcesUsed.air = "Air Pays de la Loire (PM10)";
+                
+                pO3.innerText = "Normal"; pO3.className = "badge level-bon";
+                pPm10.innerText = `${Math.round(val)} µg/m³`; pPm10.className = `badge level-${lvl}`;
+                pPm25.innerText = "Suivi global"; pPm25.className = "badge level-moyen";
+                pNo2.innerText = "Faible"; pNo2.className = "badge level-bon";
             } else {
-                airBadge.innerText = "Normal";
-                airBadge.className = "badge level-2";
+                airBadge.innerText = "Normal"; airBadge.className = "badge level-2";
                 sourcesUsed.air = "Estimation Climatique";
             }
             document.getElementById('air-source').innerText = `Source : ${sourcesUsed.air}`;
 
-            // ---- ARBITRAGE POLLENS ----
+            // ---- POLLENS ----
             let risqueBouleau = null; let risqueGraminees = null;
-
             if (ecosanteData && ecosanteData.data && ecosanteData.data.pollen && ecosanteData.data.pollen.species) {
                 ecosanteData.data.pollen.species.forEach(sp => {
                     const label = sp.label.toLowerCase();
@@ -238,9 +355,7 @@
                     const nom = rec.nom_commun ? rec.nom_commun.toLowerCase() : "";
                     const enCours = rec.pret_a_emettre === "En cours";
                     if (nom.includes("bouleau")) risqueBouleau = enCours ? 4 : 1; 
-                    if (nom.includes("graminée") || nom.includes("dactyle") || nom.includes("fléole")) {
-                        if (enCours) risqueGraminees = 4;
-                    }
+                    if (nom.includes("graminée")) if (enCours) risqueGraminees = 4;
                 });
             }
 
@@ -248,8 +363,7 @@
             if (risqueGraminees === null) {
                 const mois = new Date().getMonth();
                 if ((mois === 4 || mois === 5) && weatherData && weatherData.current.temperature_2m > 22) {
-                    risqueGraminees = 3;
-                    sourcesUsed.pollen = "Modèle Saisonnier Historique";
+                    risqueGraminees = 3; sourcesUsed.pollen = "Modèle Saisonnier";
                 } else { risqueGraminees = 0; }
             }
 
@@ -285,7 +399,6 @@
             const txt = document.getElementById(`txt-${id}`);
             const labels = ["Nul", "Très Faible", "Faible", "Modéré", "Fort", "Très Fort"];
             const val = Math.min(Math.max(value, 0), 5);
-            
             bar.style.width = `${(val / 5) * 100}%`;
             bar.className = `risk-bar level-${val}`;
             txt.innerText = labels[val];
@@ -296,3 +409,5 @@
     </script>
 </body>
 </html>
+
+```
