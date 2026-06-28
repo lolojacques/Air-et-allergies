@@ -70,12 +70,38 @@
         .pollen-details-pane { color: var(--text); border-top: 1px solid var(--bg); font-size: 12px; max-height: 0; overflow-y: auto; }
 
         .details-pane.open {
-            max-height: 400px;
+            max-height: 450px;
             margin-top: 16px;
             padding-top: 12px;
         }
         .detail-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; align-items: center; }
         .pollutant-sub { font-size: 11px; color: var(--text-sec); }
+
+        /* Style de la frise chronologique des heures */
+        .hourly-timeline {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 4px;
+            margin-top: 6px;
+            margin-bottom: 4px;
+            scrollbar-width: none; /* Cache la scrollbar sur Firefox */
+        }
+        .hourly-timeline::-webkit-scrollbar { display: none; } /* Cache la scrollbar sur Chrome/Safari */
+        
+        .hourly-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 8px 12px;
+            border-radius: 14px;
+            min-width: 45px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .hourly-time { font-size: 11px; font-weight: 600; color: rgba(4, 30, 73, 0.7); }
+        .hourly-temp { font-size: 14px; font-weight: 700; color: #041e49; margin-top: 4px; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .grid .card { margin-bottom: 0; padding: 16px; border-radius: 18px; display: flex; flex-direction: column; justify-content: center; }
@@ -130,10 +156,14 @@
                 <div id="main-weather-icon" class="main-icon">☀️</div>
                 <div class="temp" id="main-temp">--°C</div>
                 <div class="desc" id="weather-desc">Chargement...</div>
-                <div class="click-hint" id="weather-hint">👇 Touchez pour voir les précisions du jour</div>
+                <div class="click-hint" id="weather-hint">👇 Touchez pour voir la frise des heures et précisions</div>
                 
                 <div id="weather-details" class="details-pane weather-details-pane">
-                    <div class="detail-row"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
+                    <div style="font-size: 12px; font-weight: 600; margin-bottom: -4px; margin-top: 4px; color: #041e49;">📈 Évolution à venir :</div>
+                    <div class="hourly-timeline" id="hourly-container">
+                        </div>
+
+                    <div class="detail-row" style="margin-top: 4px;"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
                     <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
                     <div class="detail-row"><span>☀️ Ressenti thermique :</span> <span id="det-apparent">-- °C</span></div>
                 </div>
@@ -220,7 +250,7 @@
             const pane = document.getElementById('weather-details');
             const hint = document.getElementById('weather-hint');
             pane.classList.toggle('open');
-            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour replier" : "👇 Touchez pour voir les précisions du jour";
+            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour replier" : "👇 Touchez pour voir la frise des heures et précisions";
         }
 
         function toggleAirDetails() {
@@ -265,7 +295,8 @@
             let ecoLog = "Serveur indisponible.";
 
             try {
-                const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
+                // Modification de l'appel Open-Meteo pour inclure les données heure par heure (&hourly=temperature_2m)
+                const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
                 const ecosanteFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${CONFIG.nantesCommuneCode}?format=json`));
                 
                 const [resW, resE] = await Promise.all([weatherFetch, ecosanteFetch]);
@@ -285,7 +316,6 @@
                 if (resN.ok) {
                     nantesData = await resN.json();
                     if(nantesData.results && nantesData.results.length > 0) {
-                        // Affiche absolument tout le contenu de chaque ligne pour l'humain !
                         nantesLog = nantesData.results.map((r, i) => `Ligne ${i+1}: ${JSON.stringify(r)}`).join("\n\n");
                     } else { nantesLog = "Le fichier de Nantes est vide (0 résultats)."; }
                 } else { nantesLog = `Erreur Open Data Nantes (Code ${resN.status})`; }
@@ -302,9 +332,40 @@
                 document.getElementById('sub-wind').innerText = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
                 document.getElementById('weather-desc').innerText = currentWeather.desc;
                 document.getElementById('main-weather-icon').innerText = currentWeather.icon;
+                
                 document.getElementById('det-rain').innerText = `${weatherData.current.rain} mm`;
                 document.getElementById('det-humidity').innerText = `${weatherData.current.relative_humidity_2m} %`;
                 document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
+
+                // ---- TRAITEMENT DES DONNÉES HEURE PAR HEURE ----
+                if (weatherData.hourly && weatherData.hourly.time) {
+                    const hourlyContainer = document.getElementById('hourly-container');
+                    hourlyContainer.innerHTML = "";
+                    
+                    const maintenant = new Date();
+                    let itemsAffiches = 0;
+
+                    // On parcourt la liste des heures renvoyées par l'API
+                    for (let i = 0; i < weatherData.hourly.time.length; i++) {
+                        const heureData = new Date(weatherData.hourly.time[i]);
+                        
+                        // On n'affiche que les heures futures ou l'heure pile actuelle
+                        if (heureData >= maintenant || heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate()) {
+                            const heureTexte = heureData.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                            const tempHorraire = Math.round(weatherData.hourly.temperature_2m[i]);
+
+                            hourlyContainer.innerHTML += `
+                                <div class="hourly-item">
+                                    <div class="hourly-time">${heureTexte}</div>
+                                    <div class="hourly-temp">${tempHorraire}°</div>
+                                </div>
+                            `;
+                            itemsAffiches++;
+                            // On limite l'affichage aux 7 prochaines heures pour rester compact
+                            if (itemsAffiches >= 7) break;
+                        }
+                    }
+                }
             }
 
             // ---- AIR ----
@@ -344,7 +405,6 @@
             // ---- ANALYSE ULTRA-ROBUSTE DES POLLENS ----
             let risqueBouleau = null; let risqueGraminees = null;
             
-            // Étape 1 : On tente Éco-Santé si dispo
             if (ecosanteData && ecosanteData.data && ecosanteData.data.pollen && ecosanteData.data.pollen.species) {
                 ecosanteData.data.pollen.species.forEach(sp => {
                     const label = sp.label.toLowerCase();
@@ -354,32 +414,21 @@
                 if (risqueBouleau !== null || risqueGraminees !== null) sourcesUsed.pollen = "RNSA / Éco-Santé";
             }
 
-            // Étape 2 : Plan de secours Nantes intelligent (Scan global textuel)
             if ((risqueBouleau === null || risqueGraminees === null) && nantesData && nantesData.results) {
                 sourcesUsed.pollen = "Pollinarium Sentinelle de Nantes";
-                
                 nantesData.results.forEach(rec => {
-                    // On convertit toute la ligne en texte brut pour chercher nos mots-clés
                     const ligneTexte = JSON.stringify(rec).toLowerCase();
-                    
-                    // Détection des statuts d'émission ("en cours", "oui", "vrai", "actif")
                     const estEnEmission = ligneTexte.includes("en cours") || ligneTexte.includes("oui") || ligneTexte.includes("vrai") || ligneTexte.includes("actif");
-                    
-                    if (ligneTexte.includes("bouleau") || ligneTexte.includes("betula")) {
-                        risqueBouleau = estEnEmission ? 4 : 1;
-                    }
-                    if (ligneTexte.includes("gramin") || ligneTexte.includes("dactyle") || ligneTexte.includes("fléole") || ligneTexte.includes("poac")) {
-                        if (estEnEmission) risqueGraminees = 4;
-                    }
+                    if (ligneTexte.includes("bouleau") || ligneTexte.includes("betula")) { risqueBouleau = estEnEmission ? 4 : 1; }
+                    if (ligneTexte.includes("gramin") || ligneTexte.includes("dactyle") || ligneTexte.includes("fléole") || ligneTexte.includes("poac")) { if (estEnEmission) risqueGraminees = 4; }
                 });
             }
 
-            // Étape 3 : Modèle de secours par défaut si tout a échoué
             if (risqueBouleau === null) risqueBouleau = 0;
             if (risqueGraminees === null) {
                 const mois = new Date().getMonth();
                 if ((mois === 4 || mois === 5) && weatherData && weatherData.current.temperature_2m > 22) {
-                    risqueGraminees = 3; sourcesUsed.pollen = "Modèle Saisonnier Historique";
+                    risqueGraminees = 3; sourcesUsed.pollen = "Modèle S Saisonnier Historique";
                 } else { risqueGraminees = 0; }
             }
 
