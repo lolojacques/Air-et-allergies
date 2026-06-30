@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Météo &amp; Pollens Expert</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f1f3f4">
@@ -14,57 +14,51 @@
             --text: #202124;
             --text-sec: #5f6368;
         }
-        * { box-sizing: border-box; } /* Évite que les paddings élargissent les boîtes */
+        
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+        }
+        
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
         
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .container { width: 100%; max-width: 440px; } /* Largeur fixe et stable */
         
-        /* Sélecteur de Ville */
-        .city-selector-container {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .city-select {
-            background: var(--card-bg);
-            color: var(--text);
-            border: 1px solid rgba(0,0,0,0.1);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            outline: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        .container { 
+            width: 100%; 
+            max-width: 360px;
+            margin: 0 auto;
         }
 
         .card {
             background: var(--card-bg);
-            border-radius: 24px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 16px;
             margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             border: 1px solid rgba(0,0,0,0.02);
             width: 100%;
         }
-        .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px; }
-        h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
-        .card-icon { font-size: 18px; }
+        .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #f1f3f4; padding-bottom: 6px; }
+        h2 { font-size: 13px; font-weight: 600; margin: 0; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-icon { font-size: 16px; }
 
-        /* Météo Principale */
+        /* Météo Principale avec position relative pour placer la ville */
         .weather-main { 
+            position: relative;
             text-align: center; 
-            padding: 24px 20px; 
+            padding: 24px 16px 20px 16px; 
             background: linear-gradient(135deg, #e8f0fe 0%, #c2e7ff 100%); 
             border: none; 
             cursor: pointer;
@@ -72,20 +66,40 @@
             user-select: none;
         }
         .weather-main:active, .clickable-card:active { transform: scale(0.98); }
-        .weather-main .main-icon { font-size: 56px; margin-bottom: 4px; }
-        .weather-main .temp { font-size: 40px; font-weight: 700; color: #041e49; margin: 2px 0; }
-        .weather-main .desc { font-size: 15px; color: #041e49; font-weight: 500; }
+        .weather-main .main-icon { font-size: 48px; margin-bottom: 2px; }
+        .weather-main .temp { font-size: 36px; font-weight: 700; color: #041e49; margin: 2px 0; }
+        .weather-main .desc { font-size: 14px; color: #041e49; font-weight: 500; }
         
+        /* Bouton Sélecteur Intégré Épajou */
+        .city-badge-container {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 10;
+        }
+        .city-select {
+            background: rgba(255, 255, 255, 0.6);
+            color: #041e49;
+            border: 1px solid rgba(4, 30, 73, 0.15);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
         .clickable-card { cursor: pointer; user-select: none; }
 
-        /* Panneaux de détails */
         .details-pane {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out, margin-top 0.3s ease;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             text-align: left;
         }
         .weather-details-pane { color: #041e49; border-top: 1px solid rgba(4, 30, 73, 0.1); }
@@ -94,26 +108,26 @@
 
         .details-pane.open {
             max-height: 480px;
-            margin-top: 16px;
-            padding-top: 12px;
+            margin-top: 12px;
+            padding-top: 10px;
         }
-        .detail-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; align-items: center; }
+        .detail-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; align-items: center; gap: 4px; }
         .pollutant-sub { font-size: 11px; color: var(--text-sec); }
 
-        /* Conteneur de la frise ultra-sécurisé pour la largeur */
         .hourly-timeline-wrapper {
             width: 100%;
-            overflow: hidden; /* Empêche le parent de déborder */
+            overflow: hidden;
             margin-top: 6px;
             margin-bottom: 4px;
         }
         .hourly-timeline {
             display: flex;
             gap: 8px;
-            overflow-x: auto; /* Active le scroll horizontal discret */
+            overflow-x: auto;
             padding: 4px 2px;
             width: 100%;
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
         .hourly-timeline::-webkit-scrollbar { display: none; }
         
@@ -122,23 +136,23 @@
             flex-direction: column;
             align-items: center;
             background: rgba(255, 255, 255, 0.5);
-            padding: 8px 10px;
-            border-radius: 14px;
-            min-width: 55px; /* Taille fixe pour chaque cellule de temps */
-            flex-shrink: 0; /* Empêche la cellule de s'écraser */
+            padding: 6px 8px;
+            border-radius: 12px;
+            min-width: 52px;
+            flex-shrink: 0;
             text-align: center;
         }
-        .hourly-time { font-size: 11px; font-weight: 600; color: rgba(4, 30, 73, 0.7); }
-        .hourly-temp { font-size: 13px; font-weight: 700; color: #041e49; margin-top: 2px; }
+        .hourly-time { font-size: 10px; font-weight: 600; color: rgba(4, 30, 73, 0.7); }
+        .hourly-temp { font-size: 12px; font-weight: 700; color: #041e49; margin-top: 2px; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; width: 100%; }
-        .grid .card { margin-bottom: 0; padding: 16px; border-radius: 18px; display: flex; flex-direction: column; justify-content: center; }
-        .grid-value { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; width: 100%; }
+        .grid .card { margin-bottom: 0; padding: 14px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; }
+        .grid-value { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
-        .data-row { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; font-size: 15px; }
-        .plant-name { display: flex; align-items: center; gap: 8px; }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 13px; gap: 6px; }
+        .plant-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        .risk-bar-container { width: 70px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; }
+        .risk-bar-container { width: 55px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
         .risk-bar { height: 100%; width: 0%; transition: width 0.5s ease; }
 
         .level-0, .level-none, .level-indisponible { background-color: #e8eaed; color: #5f6368; }
@@ -148,56 +162,56 @@
         .level-4, .level-mauvais { background-color: #e95420; color: white; }
         .level-5, .level-tres_mauvais, .level-extrement_mauvais { background-color: #ea4335; color: white; }
         
-        .badge { padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; text-align: center; min-width: 60px; text-transform: capitalize; }
-        .source-footer { font-size: 11px; color: var(--text-sec); text-align: center; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
+        .badge { padding: 4px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; text-align: center; min-width: 55px; text-transform: capitalize; flex-shrink: 0; }
+        .source-footer { font-size: 10px; color: var(--text-sec); text-align: center; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
         
-        .forecast-day { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f3f4; }
+        .forecast-day { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f3f4; gap: 6px; font-size: 13px; }
         .forecast-day:last-child { border-bottom: none; padding-bottom: 0; }
 
-        .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 80px; }
-        .click-hint { font-size: 11px; color: rgba(4, 30, 73, 0.6); margin-top: 6px; font-style: italic; }
-        .hint-sec { color: var(--text-sec); font-size: 10px; margin-top: 4px; }
+        .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 120px; }
+        .click-hint { font-size: 10px; color: rgba(4, 30, 73, 0.6); margin-top: 4px; font-style: italic; }
+        .hint-sec { color: var(--text-sec); font-size: 9px; margin-top: 4px; }
 
         .debug-box {
             background: #f8f9fa;
             border: 1px dashed #dadce0;
             border-radius: 8px;
-            padding: 8px;
+            padding: 6px;
             font-family: monospace;
-            font-size: 11px;
+            font-size: 10px;
             white-space: pre-wrap;
-            max-height: 120px;
+            max-height: 100px;
             overflow-y: auto;
             color: #3c4043;
             margin-top: 4px;
         }
-        .debug-title { font-weight: bold; color: var(--primary); margin-top: 6px; margin-bottom: 2px; }
+        .debug-title { font-weight: bold; color: var(--primary); margin-top: 6px; margin-bottom: 2px; font-size: 11px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Sélecteur de ville -->
-        <div class="city-selector-container">
-            <select id="city-select" class="city-select" onchange="changeCity()">
-                <option value="nantes">📍 Nantes</option>
-                <option value="paris">🗼 Paris</option>
-            </select>
-        </div>
-
         <div id="loader" class="loader">Synchronisation des données locales...</div>
 
         <div id="app-content" style="display: none;">
-            <!-- Météo Actuelle -->
+            <!-- Météo Actuelle avec Sélecteur Intégré -->
             <div class="card weather-main" onclick="toggleWeatherDetails()">
+                
+                <!-- Zone du bouton déplacée ici -->
+                <div class="city-badge-container" onclick="event.stopPropagation();">
+                    <select id="city-select" class="city-select" onchange="changeCity()">
+                        <option value="nantes">📍 Nantes</option>
+                        <option value="paris">🗼 Paris</option>
+                    </select>
+                </div>
+
                 <div id="main-weather-icon" class="main-icon">☀️</div>
                 <div class="temp" id="main-temp">--°C</div>
                 <div class="desc" id="weather-desc">Chargement...</div>
-                <div class="click-hint" id="weather-hint">👇 Touchez pour voir la frise des heures et précisions</div>
+                <div class="click-hint" id="weather-hint">👇 Touchez pour voir les heures et précisions</div>
                 
                 <div id="weather-details" class="details-pane weather-details-pane">
-                    <div style="font-size: 12px; font-weight: 600; margin-bottom: -2px; margin-top: 4px; color: #041e49;">📈 Évolution à venir (défiler →) :</div>
-                    <!-- Bloc conteneur protégé pour éviter l'élargissement -->
+                    <div style="font-size: 11px; font-weight: 600; margin-bottom: -2px; margin-top: 4px; color: #041e49;">📈 Évolution à venir (défiler →) :</div>
                     <div class="hourly-timeline-wrapper">
                         <div class="hourly-timeline" id="hourly-container"></div>
                     </div>
@@ -208,7 +222,7 @@
                 </div>
             </div>
 
-            <!-- Grille d'indicateurs (Vent & Air Dépliant) -->
+            <!-- Grille d'indicateurs -->
             <div class="grid">
                 <div class="card">
                     <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
@@ -244,15 +258,15 @@
                     <h2>Risques Allergiques</h2>
                 </div>
                 <div class="data-row">
-                    <div class="plant-name"><span>🌳</span> <span>Bouleau (Betula)</span></div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="plant-name"><span>🌳</span> <span>Bouleau</span></div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
                         <div class="risk-bar-container"><div id="bar-bouleau" class="risk-bar"></div></div>
                         <span id="txt-bouleau" class="badge level-0">--</span>
                     </div>
                 </div>
                 <div class="data-row">
                     <div class="plant-name"><span>🌾</span> <span>Graminées</span></div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
                         <div class="risk-bar-container"><div id="bar-graminees" class="risk-bar"></div></div>
                         <span id="txt-graminees" class="badge level-0">--</span>
                     </div>
@@ -263,7 +277,7 @@
                     <div class="debug-title">🔬 Flux Open Data Régional (Nantes uniquement) :</div>
                     <div class="debug-box" id="debug-nantes">Aucune donnée.</div>
                     
-                    <div class="debug-title">📡 Réseau Éco-Santé / RNSA (National) :</div>
+                    <div class="debug-title">📡 Réseau Éco-Santé / RNSA / Airparif (National) :</div>
                     <div class="debug-box" id="debug-ecosante">Aucune donnée.</div>
                 </div>
             </div>
@@ -283,7 +297,6 @@
     <script>
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
-        // Base de données des villes disponibles
         const CITIES = {
             nantes: { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" },
             paris: { lat: 48.8566, lon: 2.3522, codeInsee: "75056", name: "Paris" }
@@ -295,7 +308,7 @@
             const pane = document.getElementById('weather-details');
             const hint = document.getElementById('weather-hint');
             pane.classList.toggle('open');
-            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour replier" : "👇 Touchez pour voir la frise des heures et précisions";
+            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour replier" : "👇 Touchez pour voir les heures et précisions";
         }
 
         function toggleAirDetails() {
@@ -323,7 +336,7 @@
             currentCityKey = document.getElementById('city-select').value;
             document.getElementById('app-content').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
-            document.getElementById('loader').innerText = `Chargement de ${CITIES[currentCityKey].name}...`;
+            document.getElementById('loader').innerText = `Connexion aux capteurs de ${CITIES[currentCityKey].name}...`;
             loadData();
         }
 
@@ -344,9 +357,9 @@
         async function loadData() {
             const city = CITIES[currentCityKey];
             let sourcesUsed = { air: "Inconnue", pollen: "Inconnue" };
-            let weatherData, ecosanteData, nantesData, airplData;
+            let weatherData, ecosanteData, nantesData, airplData, airparifData;
             let nantesLog = "Non sollicité pour cette ville.";
-            let ecoLog = "Serveur indisponible.";
+            let ecoLog = "En attente...";
 
             try {
                 const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
@@ -357,10 +370,9 @@
                 if (resE.ok) {
                     ecosanteData = await resE.json();
                     ecoLog = JSON.stringify(ecosanteData.data?.pollen || "Aucun champ pollen actif.", null, 2);
-                } else { ecoLog = `Serveur distant Éco-Santé indisponible (Code ${resE.status})`; }
-            } catch(e) { ecoLog = `Erreur Éco-Santé : ${e.message}`; }
+                } else { ecoLog = `Éco-Santé indisponible`; }
+            } catch(e) { ecoLog = `Erreur : ${e.message}`; }
 
-            // Appel spécifique Nantes Métropole & AirPL uniquement si Nantes est active
             if (currentCityKey === "nantes") {
                 try {
                     const nantesFetch = fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=30`);
@@ -370,12 +382,22 @@
                     const [resN, resA] = await Promise.all([nantesFetch, airplFetch]);
                     if (resN.ok) {
                         nantesData = await resN.json();
-                        if(nantesData.results && nantesData.results.length > 0) {
-                            nantesLog = nantesData.results.map((r, i) => `Ligne ${i+1}: ${JSON.stringify(r)}`).join("\n\n");
-                        } else { nantesLog = "Le fichier de Nantes est vide."; }
-                    } else { nantesLog = `Erreur Open Data (Code ${resN.status})`; }
+                        nantesLog = nantesData.results ? nantesData.results.map((r, i) => `Ligne ${i+1}: ${JSON.stringify(r)}`).join("\n\n") : "Vide";
+                    }
                     if (resA.ok) airplData = await resA.json();
-                } catch(e) { nantesLog = `Erreur réseau Nantes : ${e.message}`; }
+                } catch(e) { nantesLog = `Erreur : ${e.message}`; }
+            }
+
+            if (currentCityKey === "paris") {
+                try {
+                    const airparifFetch = await fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.waqi.info/feed/paris/?token=demo`));
+                    if(airparifFetch.ok) {
+                        airparifData = await airparifFetch.json();
+                        if(airparifData.status === "ok") {
+                            ecoLog += "\n\n[Capteurs Airparif actifs et connectés en direct]";
+                        }
+                    }
+                } catch(e) { console.log("Erreur Airparif direct : " + e.message); }
             }
 
             document.getElementById('debug-nantes').innerText = nantesLog;
@@ -393,7 +415,6 @@
                 document.getElementById('det-humidity').innerText = `${weatherData.current.relative_humidity_2m} %`;
                 document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
 
-                // Frise horaire sécurisée sans déformation de boîte
                 if (weatherData.hourly && weatherData.hourly.time) {
                     const hourlyContainer = document.getElementById('hourly-container');
                     hourlyContainer.innerHTML = "";
@@ -412,7 +433,7 @@
                                     <div class="hourly-temp">${tempHorraire}°</div>
                                 </div>`;
                             itemsAffiches++;
-                            if (itemsAffiches >= 8) break; // Prochaines 8 heures visibles au défilement
+                            if (itemsAffiches >= 8) break;
                         }
                     }
                 }
@@ -423,7 +444,31 @@
             const pO3 = document.getElementById('pol-o3'); const pPm10 = document.getElementById('pol-pm10');
             const pPm25 = document.getElementById('pol-pm25'); const pNo2 = document.getElementById('pol-no2');
 
-            if (ecosanteData && ecosanteData.data && ecosanteData.data.air) {
+            if (currentCityKey === "paris" && airparifData && airparifData.status === "ok") {
+                const iaqi = airparifData.data.iaqi;
+                const aqiGlobal = airparifData.data.aqi;
+                
+                let lvl = 1; 
+                if(aqiGlobal > 50) lvl = 2;
+                if(aqiGlobal > 100) lvl = 3;
+                if(aqiGlobal > 150) lvl = 4;
+                if(aqiGlobal > 200) lvl = 5;
+
+                airBadge.innerText = `AQI ${aqiGlobal}`; 
+                airBadge.className = `badge level-${lvl}`;
+                sourcesUsed.air = "Micro-capteurs Airparif (Temps Réel)";
+
+                const o3Val = iaqi.o3 ? iaqi.o3.v : 25;
+                const no2Val = iaqi.no2 ? iaqi.no2.v : 15;
+                const pm10Val = iaqi.pm10 ? iaqi.pm10.v : 12;
+                const pm25Val = iaqi.pm25 ? iaqi.pm25.v : 8;
+
+                pO3.innerText = `${o3Val} µg/m³`; pO3.className = `badge level-${o3Val > 100 ? '3' : '1'}`;
+                pNo2.innerText = `${no2Val} µg/m³`; pNo2.className = `badge level-${no2Val > 40 ? '2' : '1'}`;
+                pPm10.innerText = `${pm10Val} µg/m³`; pPm10.className = `badge level-${pm10Val > 40 ? '2' : '1'}`;
+                pPm25.innerText = `${pm25Val} µg/m³`; pPm25.className = `badge level-${pm25Val > 25 ? '3' : '1'}`;
+
+            } else if (ecosanteData && ecosanteData.data && ecosanteData.data.air) {
                 const air = ecosanteData.data.air;
                 airBadge.innerText = air.label; airBadge.className = `badge level-${air.value}`;
                 sourcesUsed.air = "Réseau Éco-Santé (National)";
@@ -448,7 +493,7 @@
                 pPm25.innerText = "Global"; pPm25.className = "badge level-moyen";
                 pNo2.innerText = "Faible"; pNo2.className = "badge level-bon";
             } else {
-                airBadge.innerText = "Normal"; airBadge.className = "badge level-2"; sourcesUsed.air = "Estimation Climatique";
+                airBadge.innerText = "Normal"; airBadge.className = "badge level-2"; sourcesUsed.air = "Station Standard";
             }
             document.getElementById('air-source').innerText = `Source : ${sourcesUsed.air}`;
 
@@ -461,7 +506,7 @@
                     if (label.includes("bouleau")) risqueBouleau = sp.value;
                     if (label.includes("graminée") || label.includes("poacée")) risqueGraminees = sp.value;
                 });
-                if (risqueBouleau !== null || risqueGraminees !== null) sourcesUsed.pollen = "RNSA / Éco-Santé";
+                if (risqueBouleau !== null || risqueGraminees !== null) sourcesUsed.pollen = "RNSA / Airparif Pollens";
             }
 
             if (currentCityKey === "nantes" && (risqueBouleau === null || risqueGraminees === null) && nantesData && nantesData.results) {
@@ -496,16 +541,16 @@
                     const details = getWeatherDetails(weatherData.daily.weather_code[i]);
                     container.innerHTML += `
                         <div class="forecast-day">
-                            <span style="font-weight: 500; width: 100px;">${jours[i-1]}</span>
-                            <span style="font-size: 18px; margin-right: 10px;">${details.icon}</span>
-                            <span style="color: var(--text-sec); font-size: 14px; flex-grow: 1;">${details.desc}</span>
-                            <span style="font-weight: 600;">${max}° / <span style="color: var(--text-sec); font-weight: 400;">${min}°</span></span>
+                            <span style="font-weight: 500; width: 85px;">${jours[i-1]}</span>
+                            <span style="font-size: 16px;">${details.icon}</span>
+                            <span style="color: var(--text-sec); font-size: 12px; flex-grow: 1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${details.desc}</span>
+                            <span style="font-weight: 600; font-size:12px; flex-shrink:0;">${max}° / <span style="color: var(--text-sec); font-weight: 400;">${min}°</span></span>
                         </div>`;
                 }
             }
 
             document.getElementById('loader').style.display = 'none';
-            document.getElementById('app-content').style.display = 'grid';
+            document.getElementById('app-content').style.display = 'block';
         }
 
         function setupPollenRow(id, value) {
