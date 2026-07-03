@@ -246,18 +246,23 @@
                 </div>
             </div>
 
-            <!-- Radar de Précipitations (Interactif) -->
+            <!-- Radar & Satellite de Précipitations (Interactif) -->
             <div class="card clickable-card" onclick="toggleRadar()">
-                <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0;">
-                    <span class="card-icon">📡</span>
-                    <h2>Radar Pluie (Direct Ouest)</h2>
+                <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="card-icon">📡</span>
+                        <h2 id="radar-title">Radar Pluie (Direct)</h2>
+                    </div>
+                    <!-- Bouton bascule (masqué par défaut, s'affiche quand le volet s'ouvre) -->
+                    <button id="map-toggle-btn" style="display: none; background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
+                        📡 Voir Satellite
+                    </button>
                 </div>
-                <div class="click-hint hint-sec" id="radar-hint" style="margin-top: 0; margin-bottom: 4px;">CN👇 Touchez pour charger et activer la carte en direct</div>
+                <div class="click-hint hint-sec" id="radar-hint" style="margin-top: 0; margin-bottom: 4px;">👇 Touchez pour charger et activer la carte en direct</div>
                 <div id="radar-container">
                     <div id="radar-map"></div>
                 </div>
             </div>
-
             <!-- Grille d'indicateurs -->
             <div class="grid">
                 <div class="card">
@@ -344,54 +349,102 @@
         let map = null;
         let radarLayer = null;
         let radarInitializedForCity = null;
+        let mapMode = "radar"; // Peut être "radar" ou "satellite"
+        let satelliteLayer = null;
 
         function initRadarMap(lat, lon) {
-            // Si la carte pour cette ville est déjà initialisée et ouverte, on ne refait rien
-            if (radarInitializedForCity === currentCityKey) return;
-
             if (!map) {
+                // Initialisation de la carte Leaflet de base
                 map = L.map('radar-map', {
                     zoomControl: false, 
                     attributionControl: false
                 }).setView([lat, lon], 7);
-
+        
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                     maxZoom: 10
                 }).addTo(map);
             } else {
                 map.setView([lat, lon], 7);
             }
-
+        
+            // Récupération des dernières images composites de RainViewer
             fetch('https://api.rainviewer.com/public/weather-maps.json')
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.radar && data.radar.past) {
-                        const latestTimestamp = data.radar.past[data.radar.past.length - 1].time;
+                        // 1. Gestion du calque RADAR (Précipitations)
+                        const latestRadarTimestamp = data.radar.past[data.radar.past.length - 1].time;
                         if (radarLayer) { map.removeLayer(radarLayer); }
-                        radarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latestTimestamp}/256/{z}/{x}/{y}/2/1_1.png`, {
-                            opacity: 0.6
-                        }).addTo(map);
+                        // Utilisation de la palette '2' (Rainbow) et du lissage '1' pour éviter les tuiles invisibles
+                        radarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latestRadarTimestamp}/256/{z}/{x}/{y}/2/1_1.png`, {
+                            opacity: 0.65,
+                            zIndex: 100
+                        });
+        
+                        // 2. Gestion du calque SATELLITE (Infrarouge/Nuages)
+                        if (data.satellite && data.satellite.infrared) {
+                            const latestSatTimestamp = data.satellite.infrared[data.satellite.infrared.length - 1].time;
+                            if (satelliteLayer) { map.removeLayer(satelliteLayer); }
+                            satelliteLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/satellite/${latestSatTimestamp}/256/{z}/{x}/{y}/0/1_0.png`, {
+                                opacity: 0.55,
+                                zIndex: 99
+                            });
+                        }
+        
+                        // Affichage du calque sélectionné par défaut
+                        updateMapDisplay();
                         
-                        // On valide que la carte est prête et dimensionnée pour la ville active
-                        setTimeout(() => { map.invalidateSize(); }, 50);
                         radarInitializedForCity = currentCityKey;
                     }
-                }).catch(err => console.error("Erreur chargement radar:", err));
+                }).catch(err => console.error("Erreur chargement couches météo:", err));
         }
 
+        function updateMapDisplay() {
+            if (!map) return;
+            
+            const title = document.getElementById('radar-title');
+            const toggleBtn = document.getElementById('map-toggle-btn');
+        
+            if (mapMode === "radar") {
+                if (satelliteLayer) map.removeLayer(satelliteLayer);
+                if (radarLayer) radarLayer.addTo(map);
+                title.innerText = "Radar Pluie (Direct)";
+                toggleBtn.innerText = "☁️ Voir Satellite";
+            } else {
+                if (radarLayer) map.removeLayer(radarLayer);
+                if (satelliteLayer) satelliteLayer.addTo(map);
+                title.innerText = "Couverture Satellite (Nuages)";
+                toggleBtn.innerText = "🌧️ Voir Radar";
+            }
+        }
+        
+        function switchMapMode(event) {
+            // Évite de fermer le volet quand on clique sur le bouton de bascule
+            event.stopPropagation(); 
+            mapMode = (mapMode === "radar") ? "satellite" : "radar";
+            updateMapDisplay();
+        }
+        
         function toggleRadar() {
             const container = document.getElementById('radar-container');
             const hint = document.getElementById('radar-hint');
+            const toggleBtn = document.getElementById('map-toggle-btn');
             const city = CITIES[currentCityKey];
-
+        
             container.classList.toggle('open');
-
+        
             if (container.classList.contains('open')) {
-                hint.innerText = "👆 Touchez pour masquer le radar";
-                // L'initialisation se lance uniquement au clic
+                hint.innerText = "👆 Touchez pour masquer la carte";
+                toggleBtn.style.display = "block";
                 initRadarMap(city.lat, city.lon);
+                
+                // CRUCIAL : Laisse le CSS finir son animation (350ms) avant de forcer le rendu Leaflet
+                setTimeout(() => { 
+                    if (map) map.invalidateSize(); 
+                }, 400);
             } else {
                 hint.innerText = "👇 Touchez pour charger et activer la carte en direct";
+                toggleBtn.style.display = "none";
             }
         }
 
