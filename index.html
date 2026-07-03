@@ -426,21 +426,23 @@
         }
         
         function toggleRadar() {
-            const container = document.getElementById('radar-container');
+            const radarContainer = document.getElementById('radar-container'); // Correction du nom ici
             const hint = document.getElementById('radar-hint');
             const toggleBtn = document.getElementById('map-toggle-btn');
             const city = CITIES[currentCityKey];
         
-            container.classList.toggle('open');
+            radarContainer.classList.toggle('open');
         
-            if (container.classList.contains('open')) {
+            if (radarContainer.classList.contains('open')) {
                 hint.innerText = "👆 Touchez pour masquer la carte";
                 toggleBtn.style.display = "block";
                 initRadarMap(city.lat, city.lon);
                 
-                // CRUCIAL : Laisse le CSS finir son animation (350ms) avant de forcer le rendu Leaflet
+                // On laisse le volet se déplier graphiquement avant de forcer Leaflet à calculer sa taille
                 setTimeout(() => { 
-                    if (map) map.invalidateSize(); 
+                    if (map) {
+                        map.invalidateSize(); 
+                    }
                 }, 400);
             } else {
                 hint.innerText = "👇 Touchez pour charger et activer la carte en direct";
