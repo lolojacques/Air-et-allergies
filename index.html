@@ -512,9 +512,13 @@
             let ecoLog = "En attente...";
 
             try {
+                // const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
+                // const ecosanteFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`));
+                // const waqiFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`));
+                // Remplacement du proxy défaillant par api.allorigins.win
                 const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
-                const ecosanteFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`));
-                const waqiFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`));
+                const ecosanteFetch = fetch(`https://api.allorigins.win/raw?url=` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`));
+                const waqiFetch = fetch(`https://api.allorigins.win/raw?url=` + encodeURIComponent(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`));
                 
                 const [resW, resE, resQ] = await Promise.all([weatherFetch, ecosanteFetch, waqiFetch]);
                 weatherData = await resW.json();
