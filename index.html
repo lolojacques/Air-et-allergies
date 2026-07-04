@@ -352,7 +352,6 @@
         let mapMode = "radar"; 
         let satelliteLayer = null;
 
-        // Lancement au démarrage global
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
         });
@@ -508,77 +507,115 @@
             
             document.getElementById('debug-nantes').innerText = "Initialisation...";
             document.getElementById('debug-ecosante').innerText = "Initialisation...";
+            
+            // Remise à zéro propre de l'affichage des pollens
+            setupPollenRow('bouleau', 0);
+            setupPollenRow('graminees', 0);
         
             // ==========================================
-            // ÉTAPE 1 : LE CRITIQUE (Météo Principale Directe)
+            // ÉTAPE 1 : LE CRITIQUE (Météo Principale)
             // ==========================================
             try {
                 const resW = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
-                if (!resW.ok) throw new Error("Serveur météo indisponible");
+                
+                if (!resW.ok) throw new Error(`Code HTTP ${resW.status}`);
                 
                 const weatherData = await resW.json();
                 displayWeatherData(weatherData);
                 
-                // On affiche instantanément l'app !
+                // On affiche instantanément l'application
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
                 
             } catch (error) {
                 console.error("Erreur Critique Météo :", error);
-                document.getElementById('loader').innerText = "⚠️ Impossible de charger les données météo de base.";
+                document.getElementById('loader').innerText = `⚠️ Service météo temporairement indisponible (${error.message}). Veuillez réessayer.`;
                 return;
             }
         
             // ==========================================
-            // ÉTAPE 2 : LE SATELLITE (Données asynchrones secondaires)
+            // ÉTAPE 2 : LE SATELLITE (Appels directs sans proxy)
             // ==========================================
         
-            // --- BLOC QUALITÉ DE L'AIR (WAQI) ---
+            // --- QUALITÉ DE L'AIR (WAQI direct sans proxy) ---
             fetch(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`)
                 .then(res => res.ok ? res.json() : null)
                 .then(waqiData => {
                     if (waqiData && waqiData.status === "ok") {
                         displayAirData(waqiData, city.name);
                     } else {
-                        document.getElementById('air-badge').innerText = "Météo Directe";
-                        document.getElementById('air-badge').className = "badge level-2";
-                        document.getElementById('air-source').innerText = "Source : Capteurs locaux indisponibles";
+                        throw new Error("Données invalides");
                     }
                 })
-                .catch(err => console.log("Échec non bloquant de l'Air :", err));
+                .catch(err => {
+                    console.log("Qualité Air indisponible :", err);
+                    document.getElementById('air-badge').innerText = "Indisponible";
+                    document.getElementById('air-badge').className = "badge level-0";
+                    document.getElementById('air-source').innerText = "Source : Capteurs distants injoignables";
+                });
         
-            // --- BLOC ALLERGIES / POLLENS (Éco-Santé National) ---
+            // --- ALLERGIES / POLLENS (Éco-Santé National direct sans proxy) ---
             fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`)
                 .then(res => res.ok ? res.json() : null)
                 .then(ecosanteData => {
                     if (ecosanteData && ecosanteData.data) {
                         displayPollenData(ecosanteData.data);
                         document.getElementById('debug-ecosante').innerText = JSON.stringify(ecosanteData.data.pollen || "Aucun détail actif", null, 2);
-                        document.getElementById('pollen-source').innerText = "Source : Réseau Éco-Santé (National)";
+                        if (currentCityKey !== "nantes") {
+                            document.getElementById('pollen-source').innerText = "Source : Réseau Éco-Santé (National)";
+                        }
                     } else {
-                        document.getElementById('debug-ecosante').innerText = "Indisponible actuellement.";
+                        document.getElementById('debug-ecosante').innerText = "Aucune donnée renvoyée par le serveur Éco-Santé.";
                     }
                 })
                 .catch(err => {
-                    document.getElementById('debug-ecosante').innerText = `Erreur : ${err.message}`;
+                    document.getElementById('debug-ecosante').innerText = `Erreur réseau Éco-Santé : ${err.message}`;
                 });
         
-            // --- BLOC SPECIFIQUE NANTES (Flux OpenData Régional historique) ---
+            // --- EXCLUSIF : PARSEUR OPEN DATA NANTES (Régional direct) ---
             if (currentCityKey === "nantes") {
-                fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=30`)
+                fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=10`)
                     .then(res => res.ok ? res.json() : null)
                     .then(nantesData => {
-                        if (nantesData && nantesData.results) {
-                            const logTxt = nantesData.results.map((r, i) => `Capteur ${i+1}: ${JSON.stringify(r)}`).join("\n\n");
+                        if (nantesData && nantesData.results && nantesData.results.length > 0) {
+                            // Sauvegarde brute dans l'onglet technique
+                            const logTxt = nantesData.results.map((r, i) => `Enregistrement ${i+1}: ${JSON.stringify(r.fields || r)}`).join("\n\n");
                             document.getElementById('debug-nantes').innerText = logTxt;
-                            document.getElementById('pollen-source').innerText = "Source : Conseil Régional (Nantes OpenData)";
+                            
+                            // Extraction intelligente et mise à jour de la synthèse graphique
+                            let nantBouleau = 0;
+                            let nantGraminees = 0;
+
+                            nantesData.results.forEach(record => {
+                                // Gestion selon la structure v2.1 de l'API Open Data
+                                const dataObj = record.fields || record;
+                                const nomPollen = (dataObj.pollen || "").toLowerCase();
+                                const niveauRisque = parseInt(dataObj.niveau_risque || dataObj.risque || 0, 10);
+
+                                if (!isNaN(niveauRisque)) {
+                                    if (nomPollen.includes("bouleau")) {
+                                        nantBouleau = Math.max(nantBouleau, niveauRisque);
+                                    }
+                                    if (nomPollen.includes("graminée") || nomPollen.includes("graminee")) {
+                                        nantGraminees = Math.max(nantGraminees, niveauRisque);
+                                    }
+                                }
+                            });
+
+                            // Injection directe dans l'interface graphique globale
+                            setupPollenRow('bouleau', nantBouleau);
+                            setupPollenRow('graminees', nantGraminees);
+                            
+                            document.getElementById('pollen-source').innerText = "Source : Conseil Régional (Nantes OpenData Direct)";
+                        } else {
+                            document.getElementById('debug-nantes').innerText = "Flux vide ou structure modifiée.";
                         }
                     })
                     .catch(err => {
-                        document.getElementById('debug-nantes').innerText = `Flux Local indisponible: ${err.message}`;
+                        document.getElementById('debug-nantes').innerText = `Erreur Flux Local Nantes : ${err.message}`;
                     });
             } else {
-                document.getElementById('debug-nantes').innerText = "Non applicable pour cette ville.";
+                document.getElementById('debug-nantes').innerText = "Non applicable pour cette ville (Hors Loire-Atlantique).";
             }
         }
         
@@ -655,6 +692,9 @@
         }
         
         function displayPollenData(ecoData) {
+            // Utilisé pour Paris (ou Nantes si l'Open Data échoue)
+            if (currentCityKey === "nantes") return; 
+
             let risqueBouleau = 0; 
             let risqueGraminees = 0;
             
@@ -662,7 +702,7 @@
                 ecoData.pollen.species.forEach(sp => {
                     const label = sp.label.toLowerCase();
                     if (label.includes("bouleau")) risqueBouleau = sp.value;
-                    if (label.includes("graminée")) risqueGraminees = sp.value;
+                    if (label.includes("graminée") || label.includes("graminee")) risqueGraminees = sp.value;
                 });
             }
             setupPollenRow('bouleau', risqueBouleau);
@@ -673,17 +713,17 @@
             const bar = document.getElementById(`bar-${plantId}`);
             const txt = document.getElementById(`txt-${plantId}`);
             
-            // Calcul du pourcentage de la barre (sur une échelle de 0 à 5)
-            const pct = Math.min((value / 5) * 100, 100);
+            // Échelle de 0 à 5 (0 = Nul, 5 = Très fort)
+            const safeValue = Math.max(0, Math.min(parseInt(value, 10) || 0, 5));
+            const pct = (safeValue / 5) * 100;
+            
             bar.style.width = `${pct}%`;
             
-            // Textes associés aux index RNSA / Éco-Santé
             const labels = ["Nul", "Très Faible", "Faible", "Moyen", "Fort", "Très Fort"];
-            txt.innerText = labels[value] || "Inconnu";
+            txt.innerText = labels[safeValue];
             
-            // Attribution des classes CSS dynamiques
-            bar.className = `risk-bar level-${value}`;
-            txt.className = `badge level-${value}`;
+            bar.className = `risk-bar level-${safeValue}`;
+            txt.className = `badge level-${safeValue}`;
         }
     </script>
 </body>
