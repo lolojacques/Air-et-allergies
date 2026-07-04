@@ -253,7 +253,6 @@
                         <span class="card-icon">📡</span>
                         <h2 id="radar-title">Radar Pluie (Direct)</h2>
                     </div>
-                    <!-- Bouton bascule (masqué par défaut, s'affiche quand le volet s'ouvre) -->
                     <button id="map-toggle-btn" style="display: none; background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
                         📡 Voir Satellite
                     </button>
@@ -263,6 +262,7 @@
                     <div id="radar-map"></div>
                 </div>
             </div>
+
             <!-- Grille d'indicateurs -->
             <div class="grid">
                 <div class="card">
@@ -349,8 +349,13 @@
         let map = null;
         let radarLayer = null;
         let radarInitializedForCity = null;
-        let mapMode = "radar"; // Peut être "radar" ou "satellite"
+        let mapMode = "radar"; 
         let satelliteLayer = null;
+
+        // Lancement au démarrage global
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+        });
 
         function initRadarMap(lat, lon) {
             if (!map) {
@@ -371,7 +376,6 @@
                 .then(data => {
                     if (!data) return;
         
-                    // 1. Récupération sécurisée du Radar (Précipitations)
                     if (data.radar && data.radar.past && data.radar.past.length > 0) {
                         const latestRadarTimestamp = data.radar.past[data.radar.past.length - 1].time;
                         if (radarLayer) { map.removeLayer(radarLayer); }
@@ -381,8 +385,6 @@
                         });
                     }
         
-                    // 2. Récupération sécurisée du Satellite (Couverture nuageuse)
-                    // Utilisation du chaînage optionnel (?.) pour éviter l'erreur "undefined (reading 'time')"
                     const satData = data.satellite?.infrared;
                     if (satData && satData.length > 0) {
                         const latestSatTimestamp = satData[satData.length - 1].time;
@@ -393,9 +395,7 @@
                         });
                     }
         
-                    // Met à jour l'affichage selon le mode actif (radar ou sat)
                     updateMapDisplay();
-                    
                     radarInitializedForCity = currentCityKey;
                 })
                 .catch(err => console.error("Erreur chargement couches météo:", err));
@@ -421,14 +421,13 @@
         }
         
         function switchMapMode(event) {
-            // Évite de fermer le volet quand on clique sur le bouton de bascule
             event.stopPropagation(); 
             mapMode = (mapMode === "radar") ? "satellite" : "radar";
             updateMapDisplay();
         }
         
         function toggleRadar() {
-            const radarContainer = document.getElementById('radar-container'); // Correction du nom ici
+            const radarContainer = document.getElementById('radar-container'); 
             const hint = document.getElementById('radar-hint');
             const toggleBtn = document.getElementById('map-toggle-btn');
             const city = CITIES[currentCityKey];
@@ -440,11 +439,8 @@
                 toggleBtn.style.display = "block";
                 initRadarMap(city.lat, city.lon);
                 
-                // On laisse le volet se déplier graphiquement avant de forcer Leaflet à calculer sa taille
                 setTimeout(() => { 
-                    if (map) {
-                        map.invalidateSize(); 
-                    }
+                    if (map) { map.invalidateSize(); }
                 }, 400);
             } else {
                 hint.innerText = "👇 Touchez pour charger et activer la carte en direct";
@@ -483,7 +479,6 @@
         function changeCity() {
             currentCityKey = document.getElementById('city-select').value;
             
-            // Fermeture automatique du volet radar lors d'un changement de ville
             const container = document.getElementById('radar-container');
             container.classList.remove('open');
             document.getElementById('radar-hint').innerText = "👇 Touchez pour charger et activer la carte en direct";
@@ -510,157 +505,186 @@
 
         async function loadData() {
             const city = CITIES[currentCityKey];
-            let sourcesUsed = { air: "Inconnue", pollen: "Inconnue" };
-            let weatherData, ecosanteData, nantesData, airplData, waqiData;
-            let nantesLog = "Non sollicité pour cette ville.";
-            let ecoLog = "En attente...";
-
+            
+            document.getElementById('debug-nantes').innerText = "Initialisation...";
+            document.getElementById('debug-ecosante').innerText = "Initialisation...";
+        
+            // ==========================================
+            // ÉTAPE 1 : LE CRITIQUE (Météo Principale Directe)
+            // ==========================================
             try {
-                // const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
-                // const ecosanteFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`));
-                // const waqiFetch = fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`));
-                // Remplacement du proxy défaillant par api.allorigins.win
-                // const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
-                // const ecosanteFetch = fetch(`https://api.allorigins.win/raw?url=` + encodeURIComponent(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`));
-                // const waqiFetch = fetch(`https://api.allorigins.win/raw?url=` + encodeURIComponent(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`));
-                // const [resW, resE, resQ] = await Promise.all([weatherFetch, ecosanteFetch, waqiFetch]);
-
-                // Attaque directe et propre sans aucun proxy instable
-                const weatherFetch = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
-                const ecosanteFetch = fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`);
-                const waqiFetch = fetch(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`);
-                const [resW, resE, resQ] = await Promise.all([weatherFetch, ecosanteFetch, waqiFetch]);
-                                
-                weatherData = await resW.json();
-                if (resE.ok) {
-                    ecosanteData = await resE.json();
-                    ecoLog = JSON.stringify(ecosanteData.data?.pollen || "Aucun champ pollen actif.", null, 2);
-                } else { ecoLog = `Éco-Santé indisponible`; }
-                if (resQ.ok) waqiData = await resQ.json();
-            } catch(e) { ecoLog = `Erreur : ${e.message}`; }
-
-            if (currentCityKey === "nantes") {
-                try {
-                    const nantesFetch = fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=30`);
-                    const targetAirUrl = 'https://data.airpl.org/api/v1/mesure/journaliere/?code_configuration_de_mesure__code_point_de_prelevement__code_polluant=24&code_configuration_de_mesure__code_point_de_prelevement__code_station__code_commune__code_departement__in=44&limit=1&export=json';
-                    const airplFetch = fetch('https://corsproxy.io/?' + encodeURIComponent(targetAirUrl));
-
-                    const [resN, resA] = await Promise.all([nantesFetch, airplFetch]);
-                    if (resN.ok) {
-                        nantesData = await resN.json();
-                        nantesLog = nantesData.results ? nantesData.results.map((r, i) => `Ligne ${i+1}: ${JSON.stringify(r)}`).join("\n\n") : "Vide";
-                    }
-                    if (resA.ok) airplData = await resA.json();
-                } catch(e) { nantesLog = `Erreur : ${e.message}`; }
-            }
-
-            document.getElementById('debug-nantes').innerText = nantesLog;
-            document.getElementById('debug-ecosante').innerText = ecoLog;
-
-            // ---- MÉTÉO ----
-            if (weatherData) {
-                const currentWeather = getWeatherDetails(weatherData.current.weather_code);
-                document.getElementById('main-temp').innerText = `${Math.round(weatherData.current.temperature_2m)}°C`;
-                document.getElementById('sub-wind').innerText = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
-                document.getElementById('weather-desc').innerText = currentWeather.desc;
-                document.getElementById('main-weather-icon').innerText = currentWeather.icon;
+                const resW = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
+                if (!resW.ok) throw new Error("Serveur météo indisponible");
                 
-                document.getElementById('det-rain').innerText = `${weatherData.current.rain} mm`;
-                document.getElementById('det-humidity').innerText = `${weatherData.current.relative_humidity_2m} %`;
-                document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
-
-                if (weatherData.hourly && weatherData.hourly.time) {
-                    const hourlyContainer = document.getElementById('hourly-container');
-                    hourlyContainer.innerHTML = "";
-                    const maintenant = new Date();
-                    let itemsAffiches = 0;
-
-                    for (let i = 0; i < weatherData.hourly.time.length; i++) {
-                        const heureData = new Date(weatherData.hourly.time[i]);
-                        if (heureData >= maintenant || (heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate())) {
-                            const heureTexte = heureData.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                            const tempHorraire = Math.round(weatherData.hourly.temperature_2m[i]);
-
-                            hourlyContainer.innerHTML += `
-                                <div class="hourly-item">
-                                    <div class="hourly-time">${heureTexte}</div>
-                                    <div class="hourly-temp">${tempHorraire}°</div>
-                                </div>`;
-                            itemsAffiches++;
-                            if (itemsAffiches >= 8) break;
+                const weatherData = await resW.json();
+                displayWeatherData(weatherData);
+                
+                // On affiche instantanément l'app !
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error("Erreur Critique Météo :", error);
+                document.getElementById('loader').innerText = "⚠️ Impossible de charger les données météo de base.";
+                return;
+            }
+        
+            // ==========================================
+            // ÉTAPE 2 : LE SATELLITE (Données asynchrones secondaires)
+            // ==========================================
+        
+            // --- BLOC QUALITÉ DE L'AIR (WAQI) ---
+            fetch(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`)
+                .then(res => res.ok ? res.json() : null)
+                .then(waqiData => {
+                    if (waqiData && waqiData.status === "ok") {
+                        displayAirData(waqiData, city.name);
+                    } else {
+                        document.getElementById('air-badge').innerText = "Météo Directe";
+                        document.getElementById('air-badge').className = "badge level-2";
+                        document.getElementById('air-source').innerText = "Source : Capteurs locaux indisponibles";
+                    }
+                })
+                .catch(err => console.log("Échec non bloquant de l'Air :", err));
+        
+            // --- BLOC ALLERGIES / POLLENS (Éco-Santé National) ---
+            fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`)
+                .then(res => res.ok ? res.json() : null)
+                .then(ecosanteData => {
+                    if (ecosanteData && ecosanteData.data) {
+                        displayPollenData(ecosanteData.data);
+                        document.getElementById('debug-ecosante').innerText = JSON.stringify(ecosanteData.data.pollen || "Aucun détail actif", null, 2);
+                        document.getElementById('pollen-source').innerText = "Source : Réseau Éco-Santé (National)";
+                    } else {
+                        document.getElementById('debug-ecosante').innerText = "Indisponible actuellement.";
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('debug-ecosante').innerText = `Erreur : ${err.message}`;
+                });
+        
+            // --- BLOC SPECIFIQUE NANTES (Flux OpenData Régional historique) ---
+            if (currentCityKey === "nantes") {
+                fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=30`)
+                    .then(res => res.ok ? res.json() : null)
+                    .then(nantesData => {
+                        if (nantesData && nantesData.results) {
+                            const logTxt = nantesData.results.map((r, i) => `Capteur ${i+1}: ${JSON.stringify(r)}`).join("\n\n");
+                            document.getElementById('debug-nantes').innerText = logTxt;
+                            document.getElementById('pollen-source').innerText = "Source : Conseil Régional (Nantes OpenData)";
                         }
+                    })
+                    .catch(err => {
+                        document.getElementById('debug-nantes').innerText = `Flux Local indisponible: ${err.message}`;
+                    });
+            } else {
+                document.getElementById('debug-nantes').innerText = "Non applicable pour cette ville.";
+            }
+        }
+        
+        function displayWeatherData(weatherData) {
+            const currentWeather = getWeatherDetails(weatherData.current.weather_code);
+            document.getElementById('main-temp').innerText = `${Math.round(weatherData.current.temperature_2m)}°C`;
+            document.getElementById('sub-wind').innerText = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
+            document.getElementById('weather-desc').innerText = currentWeather.desc;
+            document.getElementById('main-weather-icon').innerText = currentWeather.icon;
+            
+            document.getElementById('det-rain').innerText = `${weatherData.current.rain} mm`;
+            document.getElementById('det-humidity').innerText = `${weatherData.current.relative_humidity_2m} %`;
+            document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
+        
+            if (weatherData.hourly && weatherData.hourly.time) {
+                const hourlyContainer = document.getElementById('hourly-container');
+                hourlyContainer.innerHTML = "";
+                const maintenant = new Date();
+                let itemsAffiches = 0;
+        
+                for (let i = 0; i < weatherData.hourly.time.length; i++) {
+                    const heureData = new Date(weatherData.hourly.time[i]);
+                    if (heureData >= maintenant || (heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate())) {
+                        const heureTexte = heureData.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        const tempHorraire = Math.round(weatherData.hourly.temperature_2m[i]);
+        
+                        hourlyContainer.innerHTML += `
+                            <div class="hourly-item">
+                                <div class="hourly-time">${heureTexte}</div>
+                                <div class="hourly-temp">${tempHorraire}°</div>
+                            </div>`;
+                        itemsAffiches++;
+                        if (itemsAffiches >= 8) break;
                     }
                 }
             }
-
-            // ---- AIR ----
-            const airBadge = document.getElementById('air-badge');
-            const pO3 = document.getElementById('pol-o3'); const pPm10 = document.getElementById('pol-pm10');
-            const pPm25 = document.getElementById('pol-pm25'); const pNo2 = document.getElementById('pol-no2');
-
-            if (waqiData && waqiData.status === "ok") {
-                const iaqi = waqiData.data.iaqi;
-                const aqiGlobal = waqiData.data.aqi;
-                let lvl = 1; let labelAir = "Bon";
-                if (aqiGlobal > 50)  { lvl = 2; labelAir = "Moyen"; }
-                if (aqiGlobal > 100) { lvl = 3; labelAir = "Dégradé"; }
-                if (aqiGlobal > 150) { lvl = 4; labelAir = "Mauvais"; }
-                
-                airBadge.innerText = `${labelAir} (${aqiGlobal})`; airBadge.className = `badge level-${lvl}`;
-                sourcesUsed.air = `Stations locales ${city.name} (Temps Réel)`;
-
-                pO3.innerText = `${iaqi.o3 ? Math.round(iaqi.o3.v) : '--'} µg/m³`; 
-                pO3.className = `badge level-${iaqi.o3 ? (iaqi.o3.v > 100 ? 3 : iaqi.o3.v > 50 ? 2 : 1) : 0}`;
-                pPm10.innerText = `${iaqi.pm10 ? Math.round(iaqi.pm10.v) : '--'} µg/m³`; 
-                pPm10.className = `badge level-${iaqi.pm10 ? (iaqi.pm10.v > 40 ? 3 : iaqi.pm10.v > 20 ? 2 : 1) : 0}`;
-                pPm25.innerText = `${iaqi.pm25 ? Math.round(iaqi.pm25.v) : '--'} µg/m³`; 
-                pPm25.className = `badge level-${iaqi.pm25 ? (iaqi.pm25.v > 25 ? 3 : iaqi.pm25.v > 10 ? 2 : 1) : 0}`;
-                pNo2.innerText = `${iaqi.no2 ? Math.round(iaqi.no2.v) : '--'} µg/m³`; 
-                pNo2.className = `badge level-${iaqi.no2 ? (iaqi.no2.v > 40 ? 3 : iaqi.no2.v > 25 ? 2 : 1) : 0}`;
-            } else if (ecosanteData && ecosanteData.data && ecosanteData.data.air) {
-                const air = ecosanteData.data.air;
-                airBadge.innerText = air.label; airBadge.className = `badge level-${air.value}`;
-                sourcesUsed.air = "Réseau Éco-Santé (National)";
-            } else {
-                airBadge.innerText = "Normal"; airBadge.className = "badge level-2";
-            }
-            document.getElementById('air-source').innerText = `Source : ${sourcesUsed.air}`;
-
-            // ---- POLLENS ----
-            let risqueBouleau = null; let risqueGraminees = null;
-            if (ecosanteData && ecosanteData.data && ecosanteData.data.pollen && ecosanteData.data.pollen.species) {
-                ecosanteData.data.pollen.species.forEach(sp => {
-                    const label = sp.label.toLowerCase();
-                    if (label.includes("bouleau")) risqueBouleau = sp.value;
-                    if (label.includes("graminée")) risqueGraminees = sp.value;
-                });
-            }
-            setupPollenRow('bouleau', risqueBouleau || 0);
-            setupPollenRow('graminees', risqueGraminees || 0);
-
-            // ---- PRÉVISIONS ----
-            if (weatherData && weatherData.daily) {
-                const container = document.getElementById('forecast-container'); container.innerHTML = "";
+        
+            if (weatherData.daily) {
+                const container = document.getElementById('forecast-container'); 
+                container.innerHTML = "";
                 for (let i = 1; i <= 3; i++) {
                     const max = Math.round(weatherData.daily.temperature_2m_max[i]);
                     const details = getWeatherDetails(weatherData.daily.weather_code[i]);
                     container.innerHTML += `<div class="forecast-day"><span>J+${i}</span><span>${details.icon}</span><span style="flex-grow:1;font-size:12px;color:var(--text-sec);">${details.desc}</span><span>${max}°</span></div>`;
                 }
             }
-
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
+        }
+        
+        function displayAirData(waqiData, cityName) {
+            const airBadge = document.getElementById('air-badge');
+            const iaqi = waqiData.data.iaqi;
+            const aqiGlobal = waqiData.data.aqi;
+            
+            let lvl = 1; let labelAir = "Bon";
+            if (aqiGlobal > 50)  { lvl = 2; labelAir = "Moyen"; }
+            if (aqiGlobal > 100) { lvl = 3; labelAir = "Dégradé"; }
+            if (aqiGlobal > 150) { lvl = 4; labelAir = "Mauvais"; }
+            
+            airBadge.innerText = `${labelAir} (${aqiGlobal})`; 
+            airBadge.className = `badge level-${lvl}`;
+            document.getElementById('air-source').innerText = `Source : Capteurs Temps Réel - ${cityName}`;
+        
+            document.getElementById('pol-o3').innerText = `${iaqi.o3 ? Math.round(iaqi.o3.v) : '--'} µg/m³`; 
+            document.getElementById('pol-o3').className = `badge level-${iaqi.o3 ? (iaqi.o3.v > 100 ? 3 : iaqi.o3.v > 50 ? 2 : 1) : 0}`;
+            
+            document.getElementById('pol-pm10').innerText = `${iaqi.pm10 ? Math.round(iaqi.pm10.v) : '--'} µg/m³`; 
+            document.getElementById('pol-pm10').className = `badge level-${iaqi.pm10 ? (iaqi.pm10.v > 40 ? 3 : iaqi.pm10.v > 20 ? 2 : 1) : 0}`;
+            
+            document.getElementById('pol-pm25').innerText = `${iaqi.pm25 ? Math.round(iaqi.pm25.v) : '--'} µg/m³`; 
+            document.getElementById('pol-pm25').className = `badge level-${iaqi.pm25 ? (iaqi.pm25.v > 25 ? 3 : iaqi.pm25.v > 10 ? 2 : 1) : 0}`;
+            
+            document.getElementById('pol-no2').innerText = `${iaqi.no2 ? Math.round(iaqi.no2.v) : '--'} µg/m³`; 
+            document.getElementById('pol-no2').className = `badge level-${iaqi.no2 ? (iaqi.no2.v > 40 ? 3 : iaqi.no2.v > 25 ? 2 : 1) : 0}`;
+        }
+        
+        function displayPollenData(ecoData) {
+            let risqueBouleau = 0; 
+            let risqueGraminees = 0;
+            
+            if (ecoData.pollen && ecoData.pollen.species) {
+                ecoData.pollen.species.forEach(sp => {
+                    const label = sp.label.toLowerCase();
+                    if (label.includes("bouleau")) risqueBouleau = sp.value;
+                    if (label.includes("graminée")) risqueGraminees = sp.value;
+                });
+            }
+            setupPollenRow('bouleau', risqueBouleau);
+            setupPollenRow('graminees', risqueGraminees);
         }
 
-        function setupPollenRow(id, value) {
-            const bar = document.getElementById(`bar-${id}`);
-            const txt = document.getElementById(`txt-${id}`);
-            const labels = ["Nul", "Très Faible", "Faible", "Modéré", "Fort", "Très Fort"];
-            bar.style.width = `${(value / 5) * 100}%`; bar.className = `risk-bar level-${value}`;
-            txt.innerText = labels[value]; txt.className = `badge level-${value}`;
+        function setupPollenRow(plantId, value) {
+            const bar = document.getElementById(`bar-${plantId}`);
+            const txt = document.getElementById(`txt-${plantId}`);
+            
+            // Calcul du pourcentage de la barre (sur une échelle de 0 à 5)
+            const pct = Math.min((value / 5) * 100, 100);
+            bar.style.width = `${pct}%`;
+            
+            // Textes associés aux index RNSA / Éco-Santé
+            const labels = ["Nul", "Très Faible", "Faible", "Moyen", "Fort", "Très Fort"];
+            txt.innerText = labels[value] || "Inconnu";
+            
+            // Attribution des classes CSS dynamiques
+            bar.className = `risk-bar level-${value}`;
+            txt.className = `badge level-${value}`;
         }
-
-        loadData();
     </script>
 </body>
 </html>
