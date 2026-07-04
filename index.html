@@ -247,10 +247,10 @@
                 <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="card-icon">📡</span>
-                        <h2 id="radar-title">Radar Pluie (RV)</h2>
+                        <h2 id="radar-title">Radar RV (Pluie)</h2>
                     </div>
                     <button id="map-toggle-btn" style="display: none; background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
-                        ☁️ Satellite
+                        ☁️ Mode Suivant
                     </button>
                 </div>
                 <div class="click-hint hint-sec" id="radar-hint" style="margin-top: 0; margin-bottom: 4px;">👇 Touchez pour charger et activer la carte en direct</div>
@@ -344,15 +344,16 @@
             paris: { lat: 48.8566, lon: 2.3522, codeInsee: "75056", name: "Paris" }
         };
 
-        const OWM_KEY = "95ba8345756a8d662a3a96406218a205"; // Votre clé API intégrée
+        const OWM_KEY = "95ba8345756a8d662a3a96406218a205"; // Votre clé API OWM active
 
         let currentCityKey = "nantes";
         let map = null;
         let radarLayer = null;
         let satelliteLayer = null;
         let owmLayer = null;
+        let nasaLayer = null;
         let radarInitializedForCity = null;
-        let mapMode = "radar"; // États possibles : "radar" (RainViewer), "satellite", "owm"
+        let mapMode = "radar"; // "radar" (RV), "satellite" (RV), "owm", "nasa"
 
         function logDebug(message) {
             const box = document.getElementById('debug-console-box');
@@ -384,21 +385,24 @@
                 map.setView([lat, lon], 6);
             }
 
-            // Nettoyage systématique de toutes les couches météo existantes
+            // Nettoyage systématique de toutes les couches superposées
             if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
             if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
             if (owmLayer && map.hasLayer(owmLayer)) map.removeLayer(owmLayer);
+            if (nasaLayer && map.hasLayer(nasaLayer)) map.removeLayer(nasaLayer);
         
-            // 1. Initialisation de la nouvelle couche OpenWeatherMap Précipitations
+            // 1. Initialisation de la couche OpenWeatherMap Précipitations
             const owmUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
-            owmLayer = L.tileLayer(owmUrl, {
-                opacity: 0.70,
-                zIndex: 101,
-                maxNativeZoom: 12
-            });
-            logDebug("Couche OpenWeatherMap radar configurée avec succès.");
+            owmLayer = L.tileLayer(owmUrl, { opacity: 0.75, zIndex: 102, maxNativeZoom: 12 });
 
-            // 2. Requête vers RainViewer
+            // 2. Initialisation de la couche NASA GIBS Satellite Photo (Toujours opaque / visible pour test)
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const dateString = yesterday.toISOString().split('T')[0];
+            const nasaUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateString}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+            nasaLayer = L.tileLayer(nasaUrl, { opacity: 0.85, zIndex: 98, maxNativeZoom: 9 });
+
+            // 3. Requête vers l'API RainViewer
             logDebug("Fetch du fichier weather-maps.json (RainViewer)...");
             fetch('https://api.rainviewer.com/public/weather-maps.json')
                 .then(res => {
@@ -410,20 +414,20 @@
                     if (!data) throw new Error("JSON vide");
                     const host = data.host || "https://tile.rainviewer.com";
         
-                    // Configuration Radar RainViewer
+                    // Configuration Radar RainViewer (Correction palette standard /1/0_0.png)
                     if (data.radar && data.radar.past && data.radar.past.length > 0) {
                         const latestRadar = data.radar.past[data.radar.past.length - 1];
-                        const radarUrl = `${host}${latestRadar.path}/256/{z}/{x}/{y}/1/1_1.png`;
-                        radarLayer = L.tileLayer(radarUrl, { opacity: 0.65, zIndex: 100, maxNativeZoom: 7 });
+                        const radarUrl = `${host}${latestRadar.path}/256/{z}/{x}/{y}/1/0_0.png`;
+                        radarLayer = L.tileLayer(radarUrl, { opacity: 0.70, zIndex: 100, maxNativeZoom: 7 });
                         logDebug("Radar RV disponible.");
                     }
         
-                    // Configuration Satellite RainViewer
+                    // Configuration Satellite Nuages RainViewer
                     const satData = data.satellite?.inf04 || data.satellite?.infrared;
                     if (satData && satData.length > 0) {
                         const latestSat = satData[satData.length - 1];
                         const satUrl = `${host}${latestSat.path}/256/{z}/{x}/{y}/0/0_0.png`;
-                        satelliteLayer = L.tileLayer(satUrl, { opacity: 0.55, zIndex: 99, maxNativeZoom: 7 });
+                        satelliteLayer = L.tileLayer(satUrl, { opacity: 0.60, zIndex: 99, maxNativeZoom: 7 });
                         logDebug("Satellite RV disponible.");
                     }
         
@@ -431,20 +435,8 @@
                     radarInitializedForCity = currentCityKey;
                 })
                 .catch(err => {
-                    logDebug(`⚠️ Échec RainViewer : ${err.message}. Bascule immédiate sur la NASA pour la couche satellite.`);
-                    
-                    // Fallback NASA GIBS pour la couche satellite
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    const dateString = yesterday.toISOString().split('T')[0];
-                    const nasaUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateString}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
-                    
-                    satelliteLayer = L.tileLayer(nasaUrl, { opacity: 0.85, zIndex: 99, maxNativeZoom: 9 });
-                    
-                    // Si RainViewer a planté au démarrage complet, on oriente l'utilisateur par défaut vers OpenWeatherMap
-                    if (mapMode === "radar") {
-                        mapMode = "owm";
-                    }
+                    logDebug(`⚠️ Échec RainViewer : ${err.message}. Redirection par défaut vers OpenWeather.`);
+                    if (mapMode === "radar") mapMode = "owm";
                     updateMapDisplay();
                     radarInitializedForCity = currentCityKey;
                 });
@@ -456,29 +448,28 @@
             const title = document.getElementById('radar-title');
             const toggleBtn = document.getElementById('map-toggle-btn');
         
-            // Nettoyage visuel complet des couches
+            // Désinstallation de toutes les sur-couches météo actives
             if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
             if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
             if (owmLayer && map.hasLayer(owmLayer)) map.removeLayer(owmLayer);
+            if (nasaLayer && map.hasLayer(nasaLayer)) map.removeLayer(nasaLayer);
 
+            // Cycle des modes d'affichage
             if (mapMode === "radar") {
                 if (radarLayer) {
                     radarLayer.addTo(map);
                     title.innerText = "Radar Pluie (RainViewer)";
                 } else {
-                    logDebug("Radar RainViewer absent, bascule automatique sur OpenWeatherMap.");
                     mapMode = "owm";
                     updateMapDisplay();
                     return;
                 }
-                toggleBtn.innerText = "☁️ Satellite";
+                toggleBtn.innerText = "☁️ Satellite RV";
             } 
             else if (mapMode === "satellite") {
                 if (satelliteLayer) {
                     satelliteLayer.addTo(map);
-                    title.innerText = satelliteLayer._url.includes("nasa.gov") ? "Satellite NASA (Secours)" : "Couverture Satellite (Nuages)";
-                } else {
-                    title.innerText = "Satellite Indisponible";
+                    title.innerText = "Satellite Nuages (RainViewer)";
                 }
                 toggleBtn.innerText = "🌦️ Radar OWM";
             } 
@@ -486,22 +477,27 @@
                 if (owmLayer) {
                     owmLayer.addTo(map);
                     title.innerText = "Radar Pluie (OpenWeather)";
-                } else {
-                    title.innerText = "OpenWeather Indisponible";
+                }
+                toggleBtn.innerText = "🌍 Satellite NASA";
+            }
+            else if (mapMode === "nasa") {
+                if (nasaLayer) {
+                    nasaLayer.addTo(map);
+                    title.innerText = "Satellite Photo (NASA)";
                 }
                 toggleBtn.innerText = "🌧️ Radar RV";
             }
+
+            // Correction impérative des dimensions de rendu pour mobiles
+            setTimeout(() => { map.invalidateSize(); }, 50);
         }
         
         function switchMapMode(event) {
             event.stopPropagation(); 
-            if (mapMode === "radar") {
-                mapMode = "satellite";
-            } else if (mapMode === "satellite") {
-                mapMode = "owm";
-            } else {
-                mapMode = "radar";
-            }
+            if (mapMode === "radar") mapMode = "satellite";
+            else if (mapMode === "satellite") mapMode = "owm";
+            else if (mapMode === "owm") mapMode = "nasa";
+            else mapMode = "radar";
             updateMapDisplay();
         }
         
@@ -627,6 +623,7 @@
                     document.getElementById('air-source').innerText = "Source : Capteurs distants injoignables";
                 });
         
+            // Encapsulation propre de la requête Éco-Santé pour intercepter proprement la redirection ou panne de domaine
             fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`)
                 .then(res => res.ok ? res.json() : null)
                 .then(ecosanteData => {
@@ -637,12 +634,10 @@
                             document.getElementById('pollen-source').innerText = "Source : Réseau Éco-Santé (National)";
                         }
                         logDebug("Données Pollens Éco-Santé chargées.");
-                    } else {
-                        document.getElementById('debug-ecosante').innerText = "Aucune donnée renvoyée par le serveur Éco-Santé.";
                     }
                 })
                 .catch(err => {
-                    document.getElementById('debug-ecosante').innerText = `Erreur réseau Éco-Santé : ${err.message}`;
+                    document.getElementById('debug-ecosante').innerText = `Indicateur National indisponible. Redirection automatique vers capteurs locaux.`;
                 });
         
             if (currentCityKey === "nantes") {
@@ -658,16 +653,42 @@
 
                             nantesData.results.forEach(record => {
                                 const dataObj = record.fields || record;
-                                const nomPollen = (dataObj.pollen || "").toLowerCase();
-                                const niveauRisque = parseInt(dataObj.niveau_risque || dataObj.risque || 0, 10);
+                                
+                                // PARSEUR UNIVERSEL : Recherche multi-champs de l'espèce (group, pollen, libelle)
+                                let nomPollen = "";
+                                const nameFields = ['group', 'pollen', 'libelle', 'nom', 'pollen_libelle'];
+                                for (let f of nameFields) {
+                                    if (dataObj[f]) { nomPollen = String(dataObj[f]).toLowerCase(); break; }
+                                }
+                                if (!nomPollen) nomPollen = JSON.stringify(dataObj).toLowerCase();
 
-                                if (!isNaN(niveauRisque)) {
-                                    if (nomPollen.includes("bouleau")) {
-                                        nantBouleau = Math.max(nantBouleau, niveauRisque);
+                                // EXTRACTEUR DE RISQUE UNIVERSEL (Numérique ou chaînes de texte)
+                                let niveauRisque = 0;
+                                const valFields = ['niveau_risque', 'risque', 'valeur', 'niveau', 'value', 'index', 'etat'];
+                                for (let f of valFields) {
+                                    if (dataObj[f] !== undefined && dataObj[f] !== null) {
+                                        const rawVal = dataObj[f];
+                                        if (!isNaN(parseInt(rawVal, 10))) {
+                                            niveauRisque = parseInt(rawVal, 10);
+                                            break;
+                                        } else if (typeof rawVal === 'string') {
+                                            const textLvl = rawVal.toLowerCase();
+                                            if (textLvl.includes('tr') && textLvl.includes('fa')) niveauRisque = 1;
+                                            else if (textLvl.includes('fa')) niveauRisque = 2;
+                                            else if (textLvl.includes('moy')) niveauRisque = 3;
+                                            else if (textLvl.includes('fort') && textLvl.includes('tr')) niveauRisque = 5;
+                                            else if (textLvl.includes('fort')) niveauRisque = 4;
+                                            else if (textLvl.includes('nul')) niveauRisque = 0;
+                                            break;
+                                        }
                                     }
-                                    if (nomPollen.includes("graminée") || nomPollen.includes("graminee")) {
-                                        nantGraminees = Math.max(nantGraminees, niveauRisque);
-                                    }
+                                }
+
+                                if (nomPollen.includes("bouleau")) {
+                                    nantBouleau = Math.max(nantBouleau, niveauRisque);
+                                }
+                                if (nomPollen.includes("graminée") || nomPollen.includes("graminee")) {
+                                    nantGraminees = Math.max(nantGraminees, niveauRisque);
                                 }
                             });
 
