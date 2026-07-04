@@ -247,10 +247,10 @@
                 <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="card-icon">📡</span>
-                        <h2 id="radar-title">Radar Pluie (Direct)</h2>
+                        <h2 id="radar-title">Radar Pluie (RV)</h2>
                     </div>
                     <button id="map-toggle-btn" style="display: none; background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
-                        ☁️ Voir Satellite
+                        ☁️ Satellite
                     </button>
                 </div>
                 <div class="click-hint hint-sec" id="radar-hint" style="margin-top: 0; margin-bottom: 4px;">👇 Touchez pour charger et activer la carte en direct</div>
@@ -324,6 +324,14 @@
                 </div>
                 <div id="forecast-container"></div>
             </div>
+
+            <div class="card" style="background: #202124; color: #34a853; border: 1px solid #3c4043; border-radius: 14px; padding: 12px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="const el = document.getElementById('debug-console-box'); el.style.display = (el.style.display === 'none' ? 'block' : 'none');">
+                    <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #ffffff;">💻 Console de Débogage Live</span>
+                    <span style="font-size: 11px; color: #8ab4f8; font-weight: bold;">[Ouvrir/Fermer]</span>
+                </div>
+                <div id="debug-console-box" style="display: none; font-family: monospace; font-size: 10px; max-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px; border-top: 1px solid #3c4043; padding-top: 6px;">Système mobile prêt.</div>
+            </div>
         </div>
     </div>
 
@@ -336,85 +344,107 @@
             paris: { lat: 48.8566, lon: 2.3522, codeInsee: "75056", name: "Paris" }
         };
 
+        const OWM_KEY = "95ba8345756a8d662a3a96406218a205"; // Votre clé API intégrée
+
         let currentCityKey = "nantes";
         let map = null;
         let radarLayer = null;
-        let radarInitializedForCity = null;
-        let mapMode = "radar"; 
         let satelliteLayer = null;
+        let owmLayer = null;
+        let radarInitializedForCity = null;
+        let mapMode = "radar"; // États possibles : "radar" (RainViewer), "satellite", "owm"
+
+        function logDebug(message) {
+            const box = document.getElementById('debug-console-box');
+            if (box) {
+                box.innerText += `\n[${new Date().toLocaleTimeString()}] ${message}`;
+                box.scrollTop = box.scrollHeight;
+            }
+            console.log(message);
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
+            logDebug("Lancement initial de l'application...");
             loadData();
         });
 
-        // Fonction stratégique de secours temporel pour le mode local file://
-        function getFallbackTimestamp() {
-            const nowInSeconds = Math.floor(Date.now() / 1000);
-            const tenMinutes = 600;
-            return (Math.floor(nowInSeconds / tenMinutes) * tenMinutes) - 1200;
-        }
-
         function initRadarMap(lat, lon) {
+            logDebug(`initRadarMap appelée pour lat:${lat}, lon:${lon}`);
             if (!map) {
                 map = L.map('radar-map', {
                     zoomControl: false, 
                     attributionControl: false
-                }).setView([lat, lon], 7);
+                }).setView([lat, lon], 6);
         
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 10
+                    maxZoom: 12
                 }).addTo(map);
+                logDebug("Carte Leaflet de base créée.");
             } else {
-                map.setView([lat, lon], 7);
+                map.setView([lat, lon], 6);
             }
 
-            // Nettoyage impératif avant chaque tentative
-            if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; }
-            if (satelliteLayer) { map.removeLayer(satelliteLayer); satelliteLayer = null; }
+            // Nettoyage systématique de toutes les couches météo existantes
+            if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
+            if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+            if (owmLayer && map.hasLayer(owmLayer)) map.removeLayer(owmLayer);
         
+            // 1. Initialisation de la nouvelle couche OpenWeatherMap Précipitations
+            const owmUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
+            owmLayer = L.tileLayer(owmUrl, {
+                opacity: 0.70,
+                zIndex: 101,
+                maxNativeZoom: 12
+            });
+            logDebug("Couche OpenWeatherMap radar configurée avec succès.");
+
+            // 2. Requête vers RainViewer
+            logDebug("Fetch du fichier weather-maps.json (RainViewer)...");
             fetch('https://api.rainviewer.com/public/weather-maps.json')
-                .then(res => res.json())
+                .then(res => {
+                    logDebug(`Réponse JSON reçue, HTTP Status: ${res.status}`);
+                    if (!res.ok) throw new Error("Erreur réseau HTTP " + res.status);
+                    return res.json();
+                })
                 .then(data => {
+                    if (!data) throw new Error("JSON vide");
                     const host = data.host || "https://tile.rainviewer.com";
         
-                    // 1. Couche Radar (Mise à jour de la signature d'URL /1/1_2.png)
+                    // Configuration Radar RainViewer
                     if (data.radar && data.radar.past && data.radar.past.length > 0) {
-                        const latestRadarTimestamp = data.radar.past[data.radar.past.length - 1].time;
-                        radarLayer = L.tileLayer(`${host}/v2/radar/${latestRadarTimestamp}/256/{z}/{x}/{y}/1/1_2.png`, {
-                            opacity: 0.65,
-                            zIndex: 100
-                        });
+                        const latestRadar = data.radar.past[data.radar.past.length - 1];
+                        const radarUrl = `${host}${latestRadar.path}/256/{z}/{x}/{y}/1/1_1.png`;
+                        radarLayer = L.tileLayer(radarUrl, { opacity: 0.65, zIndex: 100, maxNativeZoom: 7 });
+                        logDebug("Radar RV disponible.");
                     }
         
-                    // 2. Couche Satellite (Mise à jour du nœud inf04 et de la signature /0/0_0.png)
+                    // Configuration Satellite RainViewer
                     const satData = data.satellite?.inf04 || data.satellite?.infrared;
                     if (satData && satData.length > 0) {
-                        const latestSatTimestamp = satData[satData.length - 1].time;
-                        satelliteLayer = L.tileLayer(`${host}/v2/satellite/${latestSatTimestamp}/256/{z}/{x}/{y}/0/0_0.png`, {
-                            opacity: 0.55,
-                            zIndex: 99
-                        });
+                        const latestSat = satData[satData.length - 1];
+                        const satUrl = `${host}${latestSat.path}/256/{z}/{x}/{y}/0/0_0.png`;
+                        satelliteLayer = L.tileLayer(satUrl, { opacity: 0.55, zIndex: 99, maxNativeZoom: 7 });
+                        logDebug("Satellite RV disponible.");
                     }
         
                     updateMapDisplay();
                     radarInitializedForCity = currentCityKey;
                 })
                 .catch(err => {
-                    console.warn("API RainViewer bloquée en local ou indisponible. Activation de la stratégie mathématique temporelle de secours.");
-                    const fallbackTime = getFallbackTimestamp();
-                    const host = "https://tile.rainviewer.com";
-
-                    // Injection des couches calculées hors-ligne
-                    radarLayer = L.tileLayer(`${host}/v2/radar/${fallbackTime}/256/{z}/{x}/{y}/1/1_2.png`, {
-                        opacity: 0.65,
-                        zIndex: 100
-                    });
-
-                    satelliteLayer = L.tileLayer(`${host}/v2/satellite/${fallbackTime}/256/{z}/{x}/{y}/0/0_0.png`, {
-                        opacity: 0.55,
-                        zIndex: 99
-                    });
-
+                    logDebug(`⚠️ Échec RainViewer : ${err.message}. Bascule immédiate sur la NASA pour la couche satellite.`);
+                    
+                    // Fallback NASA GIBS pour la couche satellite
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const dateString = yesterday.toISOString().split('T')[0];
+                    const nasaUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateString}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+                    
+                    satelliteLayer = L.tileLayer(nasaUrl, { opacity: 0.85, zIndex: 99, maxNativeZoom: 9 });
+                    
+                    // Si RainViewer a planté au démarrage complet, on oriente l'utilisateur par défaut vers OpenWeatherMap
+                    if (mapMode === "radar") {
+                        mapMode = "owm";
+                    }
                     updateMapDisplay();
                     radarInitializedForCity = currentCityKey;
                 });
@@ -426,22 +456,52 @@
             const title = document.getElementById('radar-title');
             const toggleBtn = document.getElementById('map-toggle-btn');
         
+            // Nettoyage visuel complet des couches
+            if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
+            if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+            if (owmLayer && map.hasLayer(owmLayer)) map.removeLayer(owmLayer);
+
             if (mapMode === "radar") {
-                if (satelliteLayer) map.removeLayer(satelliteLayer);
-                if (radarLayer) radarLayer.addTo(map);
-                title.innerText = "Radar Pluie (Direct)";
-                toggleBtn.innerText = "☁️ Voir Satellite";
-            } else {
-                if (radarLayer) map.removeLayer(radarLayer);
-                if (satelliteLayer) satelliteLayer.addTo(map);
-                title.innerText = "Couverture Satellite (Nuages)";
-                toggleBtn.innerText = "🌧️ Voir Radar";
+                if (radarLayer) {
+                    radarLayer.addTo(map);
+                    title.innerText = "Radar Pluie (RainViewer)";
+                } else {
+                    logDebug("Radar RainViewer absent, bascule automatique sur OpenWeatherMap.");
+                    mapMode = "owm";
+                    updateMapDisplay();
+                    return;
+                }
+                toggleBtn.innerText = "☁️ Satellite";
+            } 
+            else if (mapMode === "satellite") {
+                if (satelliteLayer) {
+                    satelliteLayer.addTo(map);
+                    title.innerText = satelliteLayer._url.includes("nasa.gov") ? "Satellite NASA (Secours)" : "Couverture Satellite (Nuages)";
+                } else {
+                    title.innerText = "Satellite Indisponible";
+                }
+                toggleBtn.innerText = "🌦️ Radar OWM";
+            } 
+            else if (mapMode === "owm") {
+                if (owmLayer) {
+                    owmLayer.addTo(map);
+                    title.innerText = "Radar Pluie (OpenWeather)";
+                } else {
+                    title.innerText = "OpenWeather Indisponible";
+                }
+                toggleBtn.innerText = "🌧️ Radar RV";
             }
         }
         
         function switchMapMode(event) {
             event.stopPropagation(); 
-            mapMode = (mapMode === "radar") ? "satellite" : "radar";
+            if (mapMode === "radar") {
+                mapMode = "satellite";
+            } else if (mapMode === "satellite") {
+                mapMode = "owm";
+            } else {
+                mapMode = "radar";
+            }
             updateMapDisplay();
         }
         
@@ -497,6 +557,7 @@
 
         function changeCity() {
             currentCityKey = document.getElementById('city-select').value;
+            logDebug(`Changement de ville vers : ${currentCityKey}`);
             
             const container = document.getElementById('radar-container');
             container.classList.remove('open');
@@ -541,6 +602,7 @@
                 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
+                logDebug("Données météo Open-Meteo chargées.");
                 
             } catch (error) {
                 console.error("Erreur Critique Météo :", error);
@@ -553,6 +615,7 @@
                 .then(waqiData => {
                     if (waqiData && waqiData.status === "ok") {
                         displayAirData(waqiData, city.name);
+                        logDebug("Données qualité de l'air WAQI chargées.");
                     } else {
                         throw new Error("Données invalides");
                     }
@@ -573,6 +636,7 @@
                         if (currentCityKey !== "nantes") {
                             document.getElementById('pollen-source').innerText = "Source : Réseau Éco-Santé (National)";
                         }
+                        logDebug("Données Pollens Éco-Santé chargées.");
                     } else {
                         document.getElementById('debug-ecosante').innerText = "Aucune donnée renvoyée par le serveur Éco-Santé.";
                     }
@@ -611,6 +675,7 @@
                             setupPollenRow('graminees', nantGraminees);
                             
                             document.getElementById('pollen-source').innerText = "Source : Conseil Régional (Nantes OpenData Direct)";
+                            logDebug("Flux OpenData Nantes traité.");
                         } else {
                             document.getElementById('debug-nantes').innerText = "Flux vide ou structure modifiée.";
                         }
@@ -698,18 +763,18 @@
         function displayPollenData(ecoData) {
             if (currentCityKey === "nantes") return; 
 
-            let risqueBouleau = 0; 
-            let risqueGraminees = 0;
+            let riesgoBouleau = 0; 
+            let riesgoGraminees = 0;
             
             if (ecoData.pollen && ecoData.pollen.species) {
                 ecoData.pollen.species.forEach(sp => {
                     const label = sp.label.toLowerCase();
-                    if (label.includes("bouleau")) risqueBouleau = sp.value;
-                    if (label.includes("graminée") || label.includes("graminee")) risqueGraminees = sp.value;
+                    if (label.includes("bouleau")) riesgoBouleau = sp.value;
+                    if (label.includes("graminée") || label.includes("graminee")) riesgoGraminees = sp.value;
                 });
             }
-            setupPollenRow('bouleau', risqueBouleau);
-            setupPollenRow('graminees', risqueGraminees);
+            setupPollenRow('bouleau', riesgoBouleau);
+            setupPollenRow('graminees', riesgoGraminees);
         }
 
         function setupPollenRow(plantId, value) {
