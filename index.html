@@ -7,11 +7,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f1f3f4">
     
-    <!-- Icône officielle pour l'écran d'accueil du téléphone (iOS & Android) -->
     <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='100%25' height='100%25' fill='%23f1f3f4' rx='40'/><g transform='translate(90,90)'><circle r='32' fill='%23f2994a'/><path d='M0,-52 L0,-38 M0,38 L0,52 M-52,0 L-38,0 M38,0 L52,0 M-36,-36 L-26,-26 M26,26 L36,36 M-36,36 L-26,26 M26,-26 L36,-36' stroke='%23f2c94c' stroke-width='8' stroke-linecap='round'/><g><circle cx='0' cy='-14' r='8' fill='%23ffffff'/><circle cx='0' cy='14' r='8' fill='%23ffffff'/><circle cx='-14' cy='0' r='8' fill='%23ffffff'/><circle cx='14' cy='0' r='8' fill='%23ffffff'/><circle cx='-10' cy='-10' r='8' fill='%23ffffff'/><circle cx='10' cy='10' r='8' fill='%23ffffff'/><circle cx='-10' cy='10' r='8' fill='%23ffffff'/><circle cx='10' cy='-10' r='8' fill='%23ffffff'/></g><circle r='12' fill='%23eb5757'/></g></svg>">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='100%25' height='100%25' fill='%23f1f3f4' rx='40'/><g transform='translate(90,90)'><circle r='32' fill='%23f2994a'/><path d='M0,-52 L0,-38 M0,38 L0,52 M-52,0 L-38,0 M38,0 L52,0 M-36,-36 L-26,-26 M26,26 L36,36 M-36,36 L-26,26 M26,-26 L36,-36' stroke='%23f2c94c' stroke-width='8' stroke-linecap='round'/><g><circle cx='0' cy='-14' r='8' fill='%23ffffff'/><circle cx='0' cy='14' r='8' fill='%23ffffff'/><circle cx='-14' cy='0' r='8' fill='%23ffffff'/><circle cx='14' cy='0' r='8' fill='%23ffffff'/><circle cx='-10' cy='-10' r='8' fill='%23ffffff'/><circle cx='10' cy='10' r='8' fill='%23ffffff'/><circle cx='-10' cy='10' r='8' fill='%23ffffff'/><circle cx='10' cy='-10' r='8' fill='%23ffffff'/></g><circle r='12' fill='%23eb5757'/></g></svg>">
 
-    <!-- Inclusion du CSS de Leaflet pour la carte radar -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -220,7 +218,6 @@
         <div id="loader" class="loader">Synchronisation des données locales...</div>
 
         <div id="app-content" style="display: none;">
-            <!-- Météo Actuelle -->
             <div class="card weather-main" onclick="toggleWeatherDetails()">
                 <div class="city-badge-container" onclick="event.stopPropagation();">
                     <select id="city-select" class="city-select" onchange="changeCity()">
@@ -246,7 +243,6 @@
                 </div>
             </div>
 
-            <!-- Radar & Satellite de Précipitations (Interactif) -->
             <div class="card clickable-card" onclick="toggleRadar()">
                 <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -254,7 +250,7 @@
                         <h2 id="radar-title">Radar Pluie (Direct)</h2>
                     </div>
                     <button id="map-toggle-btn" style="display: none; background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
-                        📡 Voir Satellite
+                        ☁️ Voir Satellite
                     </button>
                 </div>
                 <div class="click-hint hint-sec" id="radar-hint" style="margin-top: 0; margin-bottom: 4px;">👇 Touchez pour charger et activer la carte en direct</div>
@@ -263,7 +259,6 @@
                 </div>
             </div>
 
-            <!-- Grille d'indicateurs -->
             <div class="grid">
                 <div class="card">
                     <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
@@ -283,7 +278,6 @@
                 </div>
             </div>
 
-            <!-- Volet Air -->
             <div class="card details-pane air-details-pane" id="air-details-box" style="display:none; margin-top: -6px; margin-bottom: 12px;">
                 <div class="detail-row"><span>Ozone <span class="pollutant-sub">(O₃)</span> :</span><span id="pol-o3" class="badge level-0">--</span></div>
                 <div class="detail-row"><span>Particules <span class="pollutant-sub">(PM10)</span> :</span><span id="pol-pm10" class="badge level-0">--</span></div>
@@ -292,7 +286,6 @@
             </div>
             <div class="source-footer" id="air-source">Source : En attente...</div>
 
-            <!-- Risques Pollens -->
             <div class="card clickable-card" onclick="togglePollenDetails()">
                 <div class="card-header">
                     <span class="card-icon">🌿</span>
@@ -324,7 +317,6 @@
             </div>
             <div class="source-footer" id="pollen-source">Source : En attente...</div>
 
-            <!-- Prévisions -->
             <div class="card">
                 <div class="card-header">
                     <span class="card-icon">📅</span>
@@ -335,7 +327,6 @@
         </div>
     </div>
 
-    <!-- Script Leaflet.js pour le chargement de la carte -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
@@ -356,6 +347,13 @@
             loadData();
         });
 
+        // Fonction stratégique de secours temporel pour le mode local file://
+        function getFallbackTimestamp() {
+            const nowInSeconds = Math.floor(Date.now() / 1000);
+            const tenMinutes = 600;
+            return (Math.floor(nowInSeconds / tenMinutes) * tenMinutes) - 1200;
+        }
+
         function initRadarMap(lat, lon) {
             if (!map) {
                 map = L.map('radar-map', {
@@ -369,26 +367,30 @@
             } else {
                 map.setView([lat, lon], 7);
             }
+
+            // Nettoyage impératif avant chaque tentative
+            if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; }
+            if (satelliteLayer) { map.removeLayer(satelliteLayer); satelliteLayer = null; }
         
             fetch('https://api.rainviewer.com/public/weather-maps.json')
                 .then(res => res.json())
                 .then(data => {
-                    if (!data) return;
+                    const host = data.host || "https://tile.rainviewer.com";
         
+                    // 1. Couche Radar (Mise à jour de la signature d'URL /1/1_2.png)
                     if (data.radar && data.radar.past && data.radar.past.length > 0) {
                         const latestRadarTimestamp = data.radar.past[data.radar.past.length - 1].time;
-                        if (radarLayer) { map.removeLayer(radarLayer); }
-                        radarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latestRadarTimestamp}/256/{z}/{x}/{y}/2/1_1.png`, {
+                        radarLayer = L.tileLayer(`${host}/v2/radar/${latestRadarTimestamp}/256/{z}/{x}/{y}/1/1_2.png`, {
                             opacity: 0.65,
                             zIndex: 100
                         });
                     }
         
-                    const satData = data.satellite?.infrared;
+                    // 2. Couche Satellite (Mise à jour du nœud inf04 et de la signature /0/0_0.png)
+                    const satData = data.satellite?.inf04 || data.satellite?.infrared;
                     if (satData && satData.length > 0) {
                         const latestSatTimestamp = satData[satData.length - 1].time;
-                        if (satelliteLayer) { map.removeLayer(satelliteLayer); }
-                        satelliteLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/satellite/${latestSatTimestamp}/256/{z}/{x}/{y}/0/1_0.png`, {
+                        satelliteLayer = L.tileLayer(`${host}/v2/satellite/${latestSatTimestamp}/256/{z}/{x}/{y}/0/0_0.png`, {
                             opacity: 0.55,
                             zIndex: 99
                         });
@@ -397,7 +399,25 @@
                     updateMapDisplay();
                     radarInitializedForCity = currentCityKey;
                 })
-                .catch(err => console.error("Erreur chargement couches météo:", err));
+                .catch(err => {
+                    console.warn("API RainViewer bloquée en local ou indisponible. Activation de la stratégie mathématique temporelle de secours.");
+                    const fallbackTime = getFallbackTimestamp();
+                    const host = "https://tile.rainviewer.com";
+
+                    // Injection des couches calculées hors-ligne
+                    radarLayer = L.tileLayer(`${host}/v2/radar/${fallbackTime}/256/{z}/{x}/{y}/1/1_2.png`, {
+                        opacity: 0.65,
+                        zIndex: 100
+                    });
+
+                    satelliteLayer = L.tileLayer(`${host}/v2/satellite/${fallbackTime}/256/{z}/{x}/{y}/0/0_0.png`, {
+                        opacity: 0.55,
+                        zIndex: 99
+                    });
+
+                    updateMapDisplay();
+                    radarInitializedForCity = currentCityKey;
+                });
         }
 
         function updateMapDisplay() {
@@ -508,13 +528,9 @@
             document.getElementById('debug-nantes').innerText = "Initialisation...";
             document.getElementById('debug-ecosante').innerText = "Initialisation...";
             
-            // Remise à zéro propre de l'affichage des pollens
             setupPollenRow('bouleau', 0);
             setupPollenRow('graminees', 0);
         
-            // ==========================================
-            // ÉTAPE 1 : LE CRITIQUE (Météo Principale)
-            // ==========================================
             try {
                 const resW = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
                 
@@ -523,7 +539,6 @@
                 const weatherData = await resW.json();
                 displayWeatherData(weatherData);
                 
-                // On affiche instantanément l'application
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
                 
@@ -533,11 +548,6 @@
                 return;
             }
         
-            // ==========================================
-            // ÉTAPE 2 : LE SATELLITE (Appels directs sans proxy)
-            // ==========================================
-        
-            // --- QUALITÉ DE L'AIR (WAQI direct sans proxy) ---
             fetch(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`)
                 .then(res => res.ok ? res.json() : null)
                 .then(waqiData => {
@@ -554,7 +564,6 @@
                     document.getElementById('air-source').innerText = "Source : Capteurs distants injoignables";
                 });
         
-            // --- ALLERGIES / POLLENS (Éco-Santé National direct sans proxy) ---
             fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`)
                 .then(res => res.ok ? res.json() : null)
                 .then(ecosanteData => {
@@ -572,22 +581,18 @@
                     document.getElementById('debug-ecosante').innerText = `Erreur réseau Éco-Santé : ${err.message}`;
                 });
         
-            // --- EXCLUSIF : PARSEUR OPEN DATA NANTES (Régional direct) ---
             if (currentCityKey === "nantes") {
                 fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=10`)
                     .then(res => res.ok ? res.json() : null)
                     .then(nantesData => {
                         if (nantesData && nantesData.results && nantesData.results.length > 0) {
-                            // Sauvegarde brute dans l'onglet technique
                             const logTxt = nantesData.results.map((r, i) => `Enregistrement ${i+1}: ${JSON.stringify(r.fields || r)}`).join("\n\n");
                             document.getElementById('debug-nantes').innerText = logTxt;
                             
-                            // Extraction intelligente et mise à jour de la synthèse graphique
                             let nantBouleau = 0;
                             let nantGraminees = 0;
 
                             nantesData.results.forEach(record => {
-                                // Gestion selon la structure v2.1 de l'API Open Data
                                 const dataObj = record.fields || record;
                                 const nomPollen = (dataObj.pollen || "").toLowerCase();
                                 const niveauRisque = parseInt(dataObj.niveau_risque || dataObj.risque || 0, 10);
@@ -602,7 +607,6 @@
                                 }
                             });
 
-                            // Injection directe dans l'interface graphique globale
                             setupPollenRow('bouleau', nantBouleau);
                             setupPollenRow('graminees', nantGraminees);
                             
@@ -692,7 +696,6 @@
         }
         
         function displayPollenData(ecoData) {
-            // Utilisé pour Paris (ou Nantes si l'Open Data échoue)
             if (currentCityKey === "nantes") return; 
 
             let risqueBouleau = 0; 
@@ -713,7 +716,6 @@
             const bar = document.getElementById(`bar-${plantId}`);
             const txt = document.getElementById(`txt-${plantId}`);
             
-            // Échelle de 0 à 5 (0 = Nul, 5 = Très fort)
             const safeValue = Math.max(0, Math.min(parseInt(value, 10) || 0, 5));
             const pct = (safeValue / 5) * 100;
             
