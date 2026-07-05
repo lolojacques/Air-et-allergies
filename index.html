@@ -109,7 +109,14 @@
                     <div>💨 Ressenti Bioclimatique : <span id="eco-index-val">Calcul en cours...</span></div>
                     <div>⚠️ Vigilance Nationale : <span id="vigilance-val">Verte</span></div>
                 </div>
-
+                <!-- Prévisions -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">📅</span>
+                        <h2>Prévisions Météo</h2>
+                    </div>
+                    <div id="forecast-container"></div>
+                </div>
                 <div id="expert-alert" class="expert-alert-box" onclick="event.stopPropagation();">Analyse de l'index croisé...</div>
             </div>
 
@@ -313,7 +320,27 @@
                         document.getElementById('pol-pm25').innerText = `${data.data.iaqi.pm25 ? Math.round(data.data.iaqi.pm25.v) : '--'} µg/m³`;
                     }
                 }).catch(() => {});
-
+            // Prévisions jours J+1 à J+3 
+            if (weatherData.daily) { 
+                const container = document.getElementById('forecast-container'); 
+                if (container) { // Sécurité pour éviter les erreurs si l'élément n'est pas encore rendu
+                    container.innerHTML = ""; 
+                    for (let i = 1; i <= 3; i++) { 
+                        const max = Math.round(weatherData.daily.temperature_2m_max[i]); 
+                        
+                        // Note : 'getWeatherDetails' correspond à ton helper 'tracerCodeMeteo' dans ton architecture
+                        const details = tracerCodeMeteo(weatherData.daily.weather_code[i]); 
+                        
+                        container.innerHTML += `
+                            <div class="forecast-day">
+                                <span>J+${i}</span>
+                                <span>${details.icon || '☀️'}</span>
+                                <span style="flex-grow:1;font-size:12px;color:var(--text-sec);">${details.desc || details}</span>
+                                <span>${max}°</span>
+                            </div>`; 
+                    } 
+                }
+            }
             // CORRECTIF 3 : Réintégration complète de l'hydratation asynchrone Éco-Santé National
             fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${geo.codeInsee}?format=json`)
                 .then(res => res.json())
