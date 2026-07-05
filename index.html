@@ -39,7 +39,27 @@
 
         /* Bioclimatique & Expert Box */
         .bioclimat-stats { display: flex; flex-direction: column; gap: 4px; text-align: left; background: rgba(255,255,255,0.4); padding: 8px 12px; border-radius: 12px; margin-top: 8px; font-size: 12px; font-weight: 500; color: #041e49; }
-        .expert-alert-box { background: #fce8e6; border-left: 4px solid #ea4335; color: #c5221f; padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 10px; display: none; line-height: 1.4; text-align: left; }
+        
+        /* Correction : Boîte d'alerte permanente avec état nominal par défaut (Vert) */
+        .expert-alert-box { 
+            padding: 12px 14px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            margin-top: 10px; 
+            line-height: 1.4; 
+            text-align: left; 
+            transition: all 0.3s ease;
+            border-left: 4px solid #34a853; 
+            background: #e6f4ea; 
+            color: #137333;
+        }
+        /* Style dynamique si une menace croisée est détectée (Rouge) */
+        .expert-alert-box.danger { 
+            border-left: 4px solid #ea4335; 
+            background: #fce8e6; 
+            color: #c5221f; 
+        }
 
         /* UI Basique */
         .clickable-card { cursor: pointer; user-select: none; }
@@ -90,7 +110,7 @@
                 <div>⚠️ Vigilance Nationale : <span id="vigilance-val">Verte</span></div>
             </div>
 
-            <div id="expert-alert" class="expert-alert-box"></div>
+            <div id="expert-alert" class="expert-alert-box">Analyse de l'index croisé...</div>
 
             <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir l'évolution horaire</div>
             
@@ -179,6 +199,15 @@
         let activeLayers = {};
         let mapMode = "ign"; // Cycle: "ign" -> "radar_mf" -> "sat_owm" -> "nasa"
 
+        function logDebug(message) {
+            const box = document.getElementById('debug-console-box');
+            if (box) {
+                box.innerText += `\n[${new Date().toLocaleTimeString()}] ${message}`;
+                box.scrollTop = box.scrollHeight;
+            }
+            console.log(message);
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             initialiserInterfaceImmediate(document.getElementById('city-select').value);
         });
@@ -253,7 +282,9 @@
                     .then(data => {
                         if (data && data.results) {
                             data.results.forEach(rec => {
-                                const taxon = (rec.group || rec.name || "").toLowerCase();
+                                const taxon = (rec.group || rec.name || rec.pollen || "").toLowerCase();
+                                
+                                // Analyse de l'état (1 = émission active)
                                 const state = parseInt(rec.state, 10);
                                 if (taxon.includes("bouleau")) fusionnerEtVoter("OpenData Nantes", "bouleau", state === 1 ? 4 : 0);
                                 if (taxon.includes("gramin")) fusionnerEtVoter("OpenData Nantes", "graminees", state === 1 ? 4 : 0);
@@ -283,10 +314,8 @@
         // BRIQUE 3 : SYSTEME D'ARBITRAGE ET DE VOTE
         // =========================================================================
         function fusionnerEtVoter(source, typeDonnee, valeur) {
-            // Élimination des anomalies réseau
             if (valeur === undefined || valeur === null || isNaN(valeur)) return;
             
-            // Insertion ou mise à jour du vote de la source
             let votesActuels = scrutinPollens[typeDonnee].votes;
             const indexSource = votesActuels.findIndex(v => v.source === source);
             if (indexSource > -1) {
@@ -302,12 +331,11 @@
             Object.keys(scrutinPollens).forEach(taxon => {
                 const listeVotes = scrutinPollens[taxon].votes;
                 
-                // Règle de priorité absolue : Si une source physique terrain locale est active, elle l'emporte
+                // Priorité terrain : Si Nantes Open Data émet un avis, il surpasse le théorique
                 const voteTerrain = listeVotes.find(v => v.source === "OpenData Nantes");
                 if (voteTerrain) {
                     scrutinPollens[taxon].retenu = voteTerrain.valeur;
                 } else {
-                    // Sinon, calcul de la moyenne arithmétique arrondie des sources disponibles
                     const somme = listeVotes.reduce((acc, curr) => acc + curr.valeur, 0);
                     scrutinPollens[taxon].retenu = Math.round(somme / listeVotes.length);
                 }
@@ -317,49 +345,42 @@
         }
 
         function appliquerArbitrageGraphique() {
-            // Rendu visuel du Bouleau
             const vBouleau = scrutinPollens.bouleau.retenu;
             document.getElementById('bar-bouleau').style.width = `${(vBouleau / 5) * 100}%`;
             document.getElementById('bar-bouleau').className = `risk-bar level-${vBouleau}`;
             document.getElementById('txt-bouleau').innerText = traduireNiveauPollen(vBouleau);
             document.getElementById('txt-bouleau').className = `badge level-${vBouleau}`;
 
-            // Rendu visuel des Graminées
             const vGraminees = scrutinPollens.graminees.retenu;
             document.getElementById('bar-graminees').style.width = `${(vGraminees / 5) * 100}%`;
             document.getElementById('bar-graminees').className = `risk-bar level-${vGraminees}`;
             document.getElementById('txt-graminees').innerText = traduireNiveauPollen(vGraminees);
             document.getElementById('txt-graminees').className = `badge level-${vGraminees}`;
 
-            // Journalisation technique dans la boîte de debug
             let debugTxt = "";
             Object.keys(scrutinPollens).forEach(t => {
-                debugTxt += `${t.toUpperCase()} -> Elu: Index ${scrutinPollens[t].retenu} via [`;
+                debugTxt += `${t.toUpperCase()} -> Elu: Index ${scrutinPollens[t].retenu} [`;
                 debugTxt += scrutinPollens[t].votes.map(v => `${v.source}:${v.valeur}`).join(", ");
                 debugTxt += "]\n";
             });
             document.getElementById('debug-arbitrage').innerText = debugTxt;
 
-            // Déclenchement automatique de l'analyse croisée des risques médicaux
             analyserFacteursBioclimatiques();
         }
 
         // =========================================================================
-        // BRIQUE 4 : MOTEUR CRÉATIVITÉ BIOCLIMATIQUE (ALGORITHME DE CROISEMENT)
+        // BRIQUE 4 : CROISEMENT DE RISQUES PERMANENT ET SYNERGIE MÉDICALE
         // =========================================================================
         function CalculerRessentiBioclimatique() {
-            // Équation simplifiée de Steadman pour l'indice bioclimatique thermique
             const T = metaoCourante.temp;
             const H = metaoCourante.humidite;
-            const v = metaoCourante.vent / 3.6; // Conversion en m/s
+            const v = metaoCourante.vent / 3.6; 
 
-            // Pression de vapeur d'eau $e$
             const e = (H / 100) * 6.105 * Math.exp((17.27 * T) / (237.7 + T));
-            
-            // Formule de température apparente bioclimatique
             const ecoIndex = T + 0.33 * e - 0.70 * v - 4.00;
             
-            document.getElementById('eco-index-val').innerText = `${Math.round(ecoIndex)}°C Apparent`;
+            document.getElementById('eco-index-val').innerText = `${Math.round(ecoIndex)}°C Ressenti`;
+            analyserFacteursBioclimatiques();
         }
 
         function analyserFacteursBioclimatiques() {
@@ -370,48 +391,45 @@
             const uv = metaoCourante.uv;
             const descMeteo = document.getElementById('weather-desc').innerText.toLowerCase();
 
-            // RÈGLE MÉTIER 1 : LE FACTEUR ORAGE (Alerte d'Asthme de Tempête)
+            // RÈGLE MÉTIER 1 : LE FACTEUR ORAGE (Asthme de Tempête)
             if ((descMeteo.includes("orage") || metaoCourante.vigilance.includes("Orage")) && gramineesValue >= 3) {
-                alertBox.innerHTML = "⚡ <b>Alerte critique d'asthme de tempête</b> : Les premières précipitations orageuses vont briser les grains de pollens de Graminées et libérer des micro-particules hautement allergisantes respirables. Confinement recommandé.";
-                alertBox.style.display = "block";
+                alertBox.className = "expert-alert-box danger";
+                alertBox.innerHTML = "⚡ <b>Alerte critique d'asthme de tempête</b> : Les premières précipitations orageuses fractionnent mécaniquement les pollens de Graminées en micro-particules respirables. Confinement recommandé.";
                 return;
             }
 
             // RÈGLE MÉTIER 2 : DISPERSION MÉCANIQUE PAR VENT FORT
             if (vent > 25 && (gramineesValue >= 3 || bouleauValue >= 3)) {
-                alertBox.innerHTML = "💨 <b>Dispersion mécanique maximale</b> : Le vent soutenu (&gt; 25 km/h) associé à une faible humidité favorise le transport des pollens sur de longues distances. Évitez d'aérer les pièces de vie.";
-                alertBox.style.display = "block";
+                alertBox.className = "expert-alert-box danger";
+                alertBox.innerHTML = "💨 <b>Dispersion mécanique maximale</b> : Le vent fort (&gt; 25 km/h) couplé à l'air sec accélère la vectorisation des pollens. Évitez d'ouvrir les fenêtres.";
                 return;
             }
 
-            // RÈGLE MÉTIER 3 : AGGRAVATION OCULAIRE PAR AGRESSION UV
+            // RÈGLE MÉTIER 3 : AGGRAVATION OCULAIRE PAR RAYONNEMENT UV
             if (uv >= 6 && (gramineesValue >= 3 || bouleauValue >= 3)) {
-                alertBox.innerHTML = "🕶️ <b>Agressivité oculaire combinée</b> : L'indice UV fort d'aujourd'hui amplifie la sensibilité de la conjonctive déjà irritée par les allergènes volatils. Le port de lunettes de soleil est vivement recommandé.";
-                alertBox.style.display = "block";
+                alertBox.className = "expert-alert-box danger";
+                alertBox.innerHTML = "🕶️ <b>Agressivité oculaire combinée</b> : L'indice UV élevé majore la fragilité conjonctivale face aux allergènes de saison. Port de lunettes filtrantes préconisé.";
                 return;
             }
 
-            // Si aucune règle n'est enfreinte, masquer la boîte d'alerte
-            alertBox.style.display = "none";
+            // CORRECTIF : AFFICHAGE PERMANENT DE L'ÉTAT NOMINAL (SI AUCUN INCIDENT)
+            alertBox.className = "expert-alert-box";
+            alertBox.innerHTML = "✅ <b>Index d'exposition croisé : Favorable</b><br><span style='font-weight:500; font-size:11px; color:var(--text-sec);'>Aucune synergie aggravante météo/pollen détectée (vent modéré, pas d'orage, indice UV standard).</span>";
         }
 
         // =========================================================================
-        // BRIQUE 5 : ARCHITECTURE CARTOGRAPHIQUE INTERACTIVE (IGN SOUVERAIN)
+        // BRIQUE 5 : CONFIGURATION CARTOGRAPHIQUE NATIVE (IGN / METEO-FRANCE)
         // =========================================================================
         function initRadarMap(lat, lon) {
             if (!map) {
                 map = L.map('radar-map', { zoomControl: false, attributionControl: false }).setView([lat, lon], 6);
-                logDebug("Carte Leaflet initialisée.");
             } else {
                 map.setView([lat, lon], 6);
             }
-
-            // Injection dynamique des calques
             remonterCouchesCartographiques();
         }
 
         function remonterCouchesCartographiques() {
-            // Suppression des calques existants pour éviter les fuites de mémoire
             Object.keys(activeLayers).forEach(k => { if(map.hasLayer(activeLayers[k])) map.removeLayer(activeLayers[k]); });
 
             // ÉTAPE 1 : FOND DE PLAN GEOPLATEFORME IGN SOUVERAIN V2
@@ -426,7 +444,7 @@
                 transparent: true,
                 opacity: 0.75,
                 zIndex: 1000,
-                crossOrigin: true // Contournement ORB
+                crossOrigin: true 
             });
 
             // ÉTAPE 3 : COUVERTURE NUAGEUSE SATELLITE (OPENWEATHER)
@@ -435,7 +453,7 @@
                 zIndex: 900
             });
 
-            // ÉTAPE 4 : PLANÈTE PHOTO EN COULEURS RÉELLES (NASA GIBS SECOURS INTERNATIONAL)
+            // ÉTAPE 4 : IMAGERIE TERRESTRE GLOBALE (NASA GIBS SECOURS)
             const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
             const dateStr = yesterday.toISOString().split('T')[0];
             activeLayers.nasa = L.tileLayer(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`, {
@@ -448,9 +466,7 @@
 
         function gererAffichageCalqueUnique() {
             const title = document.getElementById('radar-title');
-            
-            // Base IGN toujours active en fond de grille de carte
-            activeLayers.ign.addTo(map);
+            activeLayers.ign.addTo(map); // L'IGN reste toujours en fond structurel
 
             if (mapMode === "ign") {
                 title.innerText = "Fond Plan Épuré (IGN France)";
@@ -477,7 +493,6 @@
             gererAffichageCalqueUnique();
         }
 
-        // Helpers de dictionnaire et d'UI basiques restants
         const CITIES = {
             nantes: { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" },
             paris: { lat: 48.8566, lon: 2.3522, codeInsee: "75056", name: "Paris" }
@@ -512,7 +527,7 @@
         function toggleAirDetails() { const el = document.getElementById('air-details-box'); el.style.display = el.style.display === "none" ? "flex" : "none"; }
         function traduireNiveauPollen(v) { return ["Nul", "Très Faible", "Faible", "Moyen", "En Cours", "Très Fort"][v] || "Nul"; }
         function tracerCodeMeteo(c) {
-            const match = { 0:"Ciel clair", 1:"Peu nuageux", 2:"Partiellement couvert", 3:"Couvert", 45:"Brouillard", 51:"Bruine légère", 61:"Pluie faible", 63:"Pluie modérée", 80:"Averses", 95:"Orage composite" };
+            const match = { 0:"Ciel clair", 1:"Peu nuageux", 2:"Partiellement couvert", 3:"Couvert", 45:"Brouillard", 51:"Bruine légère", 61:"Pluie faible", 63:"Pluie modérée", 80:"Averses", 95:"Orage" };
             return match[c] || "Temps variable";
         }
     </script>
