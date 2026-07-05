@@ -208,7 +208,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-
+        const DONNEES_SAISONNIERES = {
+            nantes: { temp: 18, desc: "Climat tempéré", vent: 15, humidite: 70, uv: 4, bouleau: 2, graminees: 3 },
+            paris: { temp: 19, desc: "Climat urbain", vent: 12, humidite: 65, uv: 4, bouleau: 1, graminees: 2 }
+        };
         const CITIES = {
             nantes: { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" },
             paris: { lat: 48.8566, lon: 2.3522, codeInsee: "75056", name: "Paris" }
