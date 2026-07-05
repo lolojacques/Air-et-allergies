@@ -114,102 +114,50 @@
             background-color: #cbd2d8;
             z-index: 1;
         }
+        /* Bioclimatique & Expert Box */
+        .bioclimat-stats { display: flex; flex-direction: column; gap: 4px; text-align: left; background: rgba(255,255,255,0.4); padding: 8px 12px; border-radius: 12px; margin-top: 8px; font-size: 12px; font-weight: 500; color: #041e49; }
+        .expert-alert-box { background: #fce8e6; border-left: 4px solid #ea4335; color: #c5221f; padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 10px; display: none; line-height: 1.4; text-align: left; }
 
+        /* UI Basique */
         .clickable-card { cursor: pointer; user-select: none; }
-
-        .details-pane {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, margin-top 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            text-align: left;
-        }
-        .weather-details-pane { color: #041e49; border-top: 1px solid rgba(4, 30, 73, 0.1); }
-        .air-details-pane { color: var(--text); border-top: 1px solid var(--bg); }
-        .pollen-details-pane { color: var(--text); border-top: 1px solid var(--bg); font-size: 12px; max-height: 0; overflow-y: auto; }
-
-        .details-pane.open {
-            max-height: 480px;
-            margin-top: 12px;
-            padding-top: 10px;
-        }
-        .detail-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; align-items: center; gap: 4px; }
-        .pollutant-sub { font-size: 11px; color: var(--text-sec); }
-
-        .hourly-timeline-wrapper {
-            width: 100%;
-            overflow: hidden;
-            margin-top: 6px;
-            margin-bottom: 4px;
-        }
-        .hourly-timeline {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 4px 2px;
-            width: 100%;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-        }
-        .hourly-timeline::-webkit-scrollbar { display: none; }
-        
-        .hourly-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 6px 8px;
-            border-radius: 12px;
-            min-width: 52px;
-            flex-shrink: 0;
-            text-align: center;
-        }
+        .details-pane { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .details-pane.open { max-height: 480px; margin-top: 12px; border-top: 1px solid rgba(4, 30, 73, 0.1); padding-top: 10px; }
+        .detail-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; align-items: center; }
+        .hourly-timeline { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px; width: 100%; scrollbar-width: none; }
+        .hourly-item { display: flex; flex-direction: column; align-items: center; background: rgba(255, 255, 255, 0.5); padding: 6px 8px; border-radius: 12px; min-width: 52px; }
         .hourly-time { font-size: 10px; font-weight: 600; color: rgba(4, 30, 73, 0.7); }
-        .hourly-temp { font-size: 12px; font-weight: 700; color: #041e49; margin-top: 2px; }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; width: 100%; }
-        .grid .card { margin-bottom: 0; padding: 14px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; }
-        .grid-value { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-
-        .data-row { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 13px; gap: 6px; }
-        .plant-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hourly-temp { font-size: 12px; font-weight: 700; color: #041e49; }
+        .hourly-timeline::-webkit-scrollbar { display: none; }// DIFF
         
-        .risk-bar-container { width: 55px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; width: 100%; }
+        .grid .card { margin-bottom: 0; padding: 14px; border-radius: 16px; }
+        .grid-value { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 13px; }
+        .risk-bar-container { width: 55px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; flex-shrink: 0; } // DIFF
         .risk-bar { height: 100%; width: 0%; transition: width 0.5s ease; }
+        .plant-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }// DIFF
+        
 
+        /* Thèmes de Niveaux */
         .level-0, .level-none, .level-indisponible { background-color: #e8eaed; color: #5f6368; }
         .level-1, .level-bon { background-color: #34a853; color: white; }
         .level-2, .level-moyen { background-color: #bccb10; color: #202124; }
         .level-3, .level-degrade { background-color: #fbbc04; color: #202124; }
         .level-4, .level-mauvais, .level-en_cours { background-color: #e95420; color: white; }
-        .level-5, .level-tres_mauvais, .level-extrement_mauvais { background-color: #ea4335; color: white; }
-        
+        .level-5, .level-tres_mauvais, .level-extrement_mauvais { background-color: #ea4335; color: white; } 
         .badge { padding: 4px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; text-align: center; min-width: 55px; text-transform: capitalize; flex-shrink: 0; }
         .source-footer { font-size: 10px; color: var(--text-sec); text-align: center; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
         
         .forecast-day { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f3f4; gap: 6px; font-size: 13px; }
         .forecast-day:last-child { border-bottom: none; padding-bottom: 0; }
 
-        .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 120px; }
-        .click-hint { font-size: 10px; color: rgba(4, 30, 73, 0.6); margin-top: 4px; font-style: italic; }
+        .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 120px; } // DIFF
+        .click-hint { font-size: 10px; color: rgba(4, 30, 73, 0.6); margin-top: 4px; font-style: italic; } // DIFF
+        
         .hint-sec { color: var(--text-sec); font-size: 9px; margin-top: 4px; }
-
-        .debug-box {
-            background: #f8f9fa;
-            border: 1px dashed #dadce0;
-            border-radius: 8px;
-            padding: 6px;
-            font-family: monospace;
-            font-size: 10px;
-            white-space: pre-wrap;
-            max-height: 100px;
-            overflow-y: auto;
-            color: #3c4043;
-            margin-top: 4px;
-        }
+        .debug-box { background: #f8f9fa; border: 1px dashed #dadce0; border-radius: 8px; padding: 6px; font-family: monospace; font-size: 10px; white-space: pre-wrap; max-height: 80px; overflow-y: auto; color: #3c4043;margin-top: 4px; } // DIFF
         .debug-title { font-weight: bold; color: var(--primary); margin-top: 6px; margin-bottom: 2px; font-size: 11px; }
+        
     </style>
 </head>
 <body>
