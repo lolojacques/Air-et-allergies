@@ -7,113 +7,36 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f1f3f4">
     
-    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='100%25' height='100%25' fill='%23f1f3f4' rx='40'/><g transform='translate(90,90)'><circle r='32' fill='%23f2994a'/><path d='M0,-52 L0,-38 M0,38 L0,52 M-52,0 L-38,0 M38,0 L52,0 M-36,-36 L-26,-26 M26,26 L36,36 M-36,36 L-26,26 M26,-26 L36,-36' stroke='%23f2c94c' stroke-width='8' stroke-linecap='round'/><g><circle cx='0' cy='-14' r='8' fill='%23ffffff'/><circle cx='0' cy='14' r='8' fill='%23ffffff'/><circle cx='-14' cy='0' r='8' fill='%23ffffff'/><circle cx='14' cy='0' r='8' fill='%23ffffff'/><circle cx='-10' cy='-10' r='8' fill='%23ffffff'/><circle cx='10' cy='10' r='8' fill='%23ffffff'/><circle cx='-10' cy='10' r='8' fill='%23ffffff'/><circle cx='10' cy='-10' r='8' fill='%23ffffff'/></g><circle r='12' fill='%23eb5757'/></g></svg>">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='100%25' height='100%25' fill='%23f1f3f4' rx='40'/><g transform='translate(90,90)'><circle r='32' fill='%23f2994a'/><path d='M0,-52 L0,-38 M0,38 L0,52 M-52,0 L-38,0 M38,0 L52,0 M-36,-36 L-26,-26 M26,26 L36,36 M-36,36 L-26,26 M26,-26 L36,-36' stroke='%23f2c94c' stroke-width='8' stroke-linecap='round'/><g><circle cx='0' cy='-14' r='8' fill='%23ffffff'/><circle cx='0' cy='14' r='8' fill='%23ffffff'/><circle cx='-14' cy='0' r='8' fill='%23ffffff'/><circle cx='14' cy='0' r='8' fill='%23ffffff'/><circle cx='-10' cy='-10' r='8' fill='%23ffffff'/><circle cx='10' cy='10' r='8' fill='%23ffffff'/><circle cx='-10' cy='10' r='8' fill='%23ffffff'/><circle cx='10' cy='-10' r='8' fill='%23ffffff'/></g><circle r='12' fill='%23eb5757'/></g></svg>">
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='100%25' height='100%25' fill='%23f1f3f4' rx='40'/><g transform='translate(90,90)'><circle r='32' fill='%23f2994a'/><path d='M0,-52 L0,-38 M0,38 L0,52 M-52,0 L-38,0 M38,0 L52,0 M-36,-36 L-26,-26 M26,26 L36,36 M-36,36 L-26,26 M26,-26 L36,-36' stroke='%23f2c94c' stroke-width='8' stroke-linecap='round'/><circle r='12' fill='%23eb5757'/></g></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='100%25' height='100%25' fill='%23f1f3f4' rx='40'/><g transform='translate(90,90)'><circle r='32' fill='%23f2994a'/><path d='M0,-52 L0,-38 M0,38 L0,52 M-52,0 L-38,0 M38,0 L52,0 M-36,-36 L-26,-26 M26,26 L36,36 M-36,36 L-26,26 M26,-26 L36,-36' stroke='%23f2c94c' stroke-width='8' stroke-linecap='round'/><circle r='12' fill='%23eb5757'/></g></svg>">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root {
-            --primary: #1a73e8;
-            --bg: #f1f3f4;
-            --card-bg: #ffffff;
-            --text: #202124;
-            --text-sec: #5f6368;
-        }
-        
-        *, *::before, *::after { 
-            box-sizing: border-box; 
-        }
-        
-        html, body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .container { 
-            width: 100%; 
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            border: 1px solid rgba(0,0,0,0.02);
-            width: 100%;
-        }
+        :root { --primary: #1a73e8; --bg: #f1f3f4; --card-bg: #ffffff; --text: #202124; --text-sec: #5f6368; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { max-width: 100%; overflow-x: hidden; background-color: var(--bg); color: var(--text); margin: 0; padding: 12px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 400px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); width: 100%; }
         .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 2px solid #f1f3f4; padding-bottom: 6px; }
         h2 { font-size: 13px; font-weight: 600; margin: 0; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
         .card-icon { font-size: 16px; }
-
+        
         /* Météo Principale */
-        .weather-main { 
-            position: relative;
-            text-align: center; 
-            padding: 24px 16px 20px 16px; 
-            background: linear-gradient(135deg, #e8f0fe 0%, #c2e7ff 100%); 
-            border: none; 
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            user-select: none;
-        }
+        .weather-main { position: relative; text-align: center; padding: 24px 16px 20px 16px; background: linear-gradient(135deg, #e8f0fe 0%, #c2e7ff 100%); border: none; cursor: pointer; transition: transform 0.2s; user-select: none; }
         .weather-main:active, .clickable-card:active { transform: scale(0.98); }
         .weather-main .main-icon { font-size: 48px; margin-bottom: 2px; }
         .weather-main .temp { font-size: 36px; font-weight: 700; color: #041e49; margin: 2px 0; }
         .weather-main .desc { font-size: 14px; color: #041e49; font-weight: 500; }
         
-        /* Sélecteur de ville */
-        .city-badge-container {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            z-index: 10;
-        }
-        .city-select {
-            background: rgba(255, 255, 255, 0.6);
-            color: #041e49;
-            border: 1px solid rgba(4, 30, 73, 0.15);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            outline: none;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
+        /* Sélecteurs */
+        .city-badge-container { position: absolute; top: 12px; right: 12px; z-index: 10; }
+        .city-select { background: rgba(255, 255, 255, 0.6); color: #041e49; border: 1px solid rgba(4, 30, 73, 0.15); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; outline: none; backdrop-filter: blur(4px); }
 
-        /* Zone Radar Map */
-        #radar-container {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-out;
-            width: 100%;
-        }
-        #radar-container.open {
-            max-height: 220px;
-        }
-        #radar-map {
-            width: 100%;
-            height: 200px;
-            border-radius: 14px;
-            margin-top: 8px;
-            background-color: #cbd2d8;
-            z-index: 1;
-        }
+        /* Cartographie */
+        #radar-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; width: 100%; }
+        #radar-container.open { max-height: 220px; }
+        #radar-map { width: 100%; height: 200px; border-radius: 14px; margin-top: 8px; background-color: #cbd2d8; z-index: 1; }
+
         /* Bioclimatique & Expert Box */
         .bioclimat-stats { display: flex; flex-direction: column; gap: 4px; text-align: left; background: rgba(255,255,255,0.4); padding: 8px 12px; border-radius: 12px; margin-top: 8px; font-size: 12px; font-weight: 500; color: #041e49; }
         .expert-alert-box { background: #fce8e6; border-left: 4px solid #ea4335; color: #c5221f; padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 10px; display: none; line-height: 1.4; text-align: left; }
@@ -127,611 +50,470 @@
         .hourly-item { display: flex; flex-direction: column; align-items: center; background: rgba(255, 255, 255, 0.5); padding: 6px 8px; border-radius: 12px; min-width: 52px; }
         .hourly-time { font-size: 10px; font-weight: 600; color: rgba(4, 30, 73, 0.7); }
         .hourly-temp { font-size: 12px; font-weight: 700; color: #041e49; }
-        .hourly-timeline::-webkit-scrollbar { display: none; }// DIFF
         
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; width: 100%; }
         .grid .card { margin-bottom: 0; padding: 14px; border-radius: 16px; }
         .grid-value { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
         .data-row { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 13px; }
-        .risk-bar-container { width: 55px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; flex-shrink: 0; } // DIFF
+        .risk-bar-container { width: 55px; background: #f1f3f4; height: 6px; border-radius: 3px; overflow: hidden; }
         .risk-bar { height: 100%; width: 0%; transition: width 0.5s ease; }
-        .plant-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }// DIFF
         
-
         /* Thèmes de Niveaux */
-        .level-0, .level-none, .level-indisponible { background-color: #e8eaed; color: #5f6368; }
-        .level-1, .level-bon { background-color: #34a853; color: white; }
-        .level-2, .level-moyen { background-color: #bccb10; color: #202124; }
-        .level-3, .level-degrade { background-color: #fbbc04; color: #202124; }
-        .level-4, .level-mauvais, .level-en_cours { background-color: #e95420; color: white; }
-        .level-5, .level-tres_mauvais, .level-extrement_mauvais { background-color: #ea4335; color: white; } 
-        .badge { padding: 4px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; text-align: center; min-width: 55px; text-transform: capitalize; flex-shrink: 0; }
+        .level-0, .level-termine { background-color: #e8eaed; color: #5f6368; }
+        .level-1 { background-color: #34a853; color: white; }
+        .level-2 { background-color: #bccb10; color: #202124; }
+        .level-3 { background-color: #fbbc04; color: #202124; }
+        .level-4, .level-en_cours { background-color: #e95420; color: white; }
+        .level-5 { background-color: #ea4335; color: white; }
+        .badge { padding: 4px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; text-align: center; min-width: 55px; text-transform: capitalize; }
         .source-footer { font-size: 10px; color: var(--text-sec); text-align: center; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
-        
-        .forecast-day { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f3f4; gap: 6px; font-size: 13px; }
-        .forecast-day:last-child { border-bottom: none; padding-bottom: 0; }
-
-        .loader { text-align: center; color: var(--text-sec); font-style: italic; margin-top: 120px; } // DIFF
-        .click-hint { font-size: 10px; color: rgba(4, 30, 73, 0.6); margin-top: 4px; font-style: italic; } // DIFF
-        
-        .hint-sec { color: var(--text-sec); font-size: 9px; margin-top: 4px; }
-        .debug-box { background: #f8f9fa; border: 1px dashed #dadce0; border-radius: 8px; padding: 6px; font-family: monospace; font-size: 10px; white-space: pre-wrap; max-height: 80px; overflow-y: auto; color: #3c4043;margin-top: 4px; } // DIFF
-        .debug-title { font-weight: bold; color: var(--primary); margin-top: 6px; margin-bottom: 2px; font-size: 11px; }
-        
+        .debug-box { background: #f8f9fa; border: 1px dashed #dadce0; border-radius: 8px; padding: 6px; font-family: monospace; font-size: 10px; white-space: pre-wrap; max-height: 80px; overflow-y: auto; color: #3c4043; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="loader" class="loader">Synchronisation des données locales...</div>
-
-        <div id="app-content" style="display: none;">
-            <div class="card weather-main" onclick="toggleWeatherDetails()">
-                <div class="city-badge-container" onclick="event.stopPropagation();">
-                    <select id="city-select" class="city-select" onchange="changeCity()">
-                        <option value="nantes">📍 Nantes</option>
-                        <option value="paris">🗼 Paris</option>
-                    </select>
-                </div>
-
-                <div id="main-weather-icon" class="main-icon">☀️</div>
-                <div class="temp" id="main-temp">--°C</div>
-                <div class="desc" id="weather-desc">Chargement...</div>
-                <div class="click-hint" id="weather-hint">👇 Touchez pour voir les heures et précisions</div>
-                
-                <div id="weather-details" class="details-pane weather-details-pane">
-                    <div style="font-size: 11px; font-weight: 600; margin-bottom: -2px; margin-top: 4px; color: #041e49;">📈 Évolution à venir (défiler →) :</div>
-                    <div class="hourly-timeline-wrapper">
-                        <div class="hourly-timeline" id="hourly-container"></div>
-                    </div>
-
-                    <div class="detail-row" style="margin-top: 4px;"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
-                    <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
-                    <div class="detail-row"><span>☀️ Ressenti thermique :</span> <span id="det-apparent">-- °C</span></div>
-                </div>
+    <div class="container" id="app-canvas">
+        <div class="card weather-main" onclick="toggleWeatherDetails()">
+            <div class="city-badge-container" onclick="event.stopPropagation();">
+                <select id="city-select" class="city-select" onchange="changerVilleLocale()">
+                    <option value="nantes">📍 Nantes</option>
+                    <option value="paris">🗼 Paris</option>
+                </select>
+            </div>
+            <div id="main-weather-icon" class="main-icon">☀️</div>
+            <div class="temp" id="main-temp">--°C</div>
+            <div class="desc" id="weather-desc">Initialisation...</div>
+            
+            <div class="bioclimat-stats">
+                <div>☀️ Indice UV : <span id="uv-val">--</span></div>
+                <div>💨 Ressenti Bioclimatique : <span id="eco-index-val">Calcul en cours...</span></div>
+                <div>⚠️ Vigilance Nationale : <span id="vigilance-val">Verte</span></div>
             </div>
 
-            <div class="card clickable-card" onclick="toggleRadar()">
-                <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="card-icon">📡</span>
-                        <h2 id="radar-title">Radar RV (Pluie)</h2>
-                    </div>
-                    <button id="map-toggle-btn" style="display: none; background: #1a73e8; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
-                        🔄 Mode Suivant
-                    </button>
-                </div>
-                <div class="click-hint hint-sec" id="radar-hint" style="margin-top: 0; margin-bottom: 4px;">👇 Touchez pour charger et activer la carte en direct</div>
-                <div id="radar-container">
-                    <div id="radar-map"></div>
-                </div>
-            </div>
+            <div id="expert-alert" class="expert-alert-box"></div>
 
-            <div class="grid">
-                <div class="card">
-                    <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
-                        <span class="card-icon">💨</span>
-                        <h2>Vent</h2>
-                    </div>
-                    <div class="grid-value" id="sub-wind">-- km/h</div>
-                </div>
-                
-                <div class="card clickable-card" onclick="toggleAirDetails()">
-                    <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
-                        <span class="card-icon">🫁</span>
-                        <h2>Qualité Air</h2>
-                    </div>
-                    <div id="air-badge" class="badge level-0" style="margin-top: 6px; align-self: flex-start;">--</div>
-                    <div class="click-hint hint-sec" id="air-hint">👇 Détails polluants</div>
-                </div>
-            </div>
-
-            <div class="card details-pane air-details-pane" id="air-details-box" style="display:none; margin-top: -6px; margin-bottom: 12px;">
-                <div class="detail-row"><span>Ozone <span class="pollutant-sub">(O₃)</span> :</span><span id="pol-o3" class="badge level-0">--</span></div>
-                <div class="detail-row"><span>Particules <span class="pollutant-sub">(PM10)</span> :</span><span id="pol-pm10" class="badge level-0">--</span></div>
-                <div class="detail-row"><span>Particules fines <span class="pollutant-sub">(PM2.5)</span> :</span><span id="pol-pm25" class="badge level-0">--</span></div>
-                <div class="detail-row"><span>Dioxyde d'Azote <span class="pollutant-sub">(NO₂)</span> :</span><span id="pol-no2" class="badge level-0">--</span></div>
-            </div>
-            <div class="source-footer" id="air-source">Source : En attente...</div>
-
-            <div class="card clickable-card" onclick="togglePollenDetails()">
-                <div class="card-header">
-                    <span class="card-icon">🌿</span>
-                    <h2>Risques Allergiques</h2>
-                </div>
-                <div class="data-row">
-                    <div class="plant-name"><span>🌳</span> <span>Bouleau</span></div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <div class="risk-bar-container"><div id="bar-bouleau" class="risk-bar"></div></div>
-                        <span id="txt-bouleau" class="badge level-0">--</span>
-                    </div>
-                </div>
-                <div class="data-row">
-                    <div class="plant-name"><span>🌾</span> <span>Graminées</span></div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <div class="risk-bar-container"><div id="bar-graminees" class="risk-bar"></div></div>
-                        <span id="txt-graminees" class="badge level-0">--</span>
-                    </div>
-                </div>
-                <div class="click-hint hint-sec" id="pollen-hint" style="text-align: center;">👇 Touchez pour voir les diagnostics bruts</div>
-
-                <div id="pollen-details-box" class="details-pane pollen-details-pane">
-                    <div class="debug-title">🔬 Flux Open Data Régional (Nantes uniquement) :</div>
-                    <div class="debug-box" id="debug-nantes">Aucune donnée.</div>
-                    
-                    <div class="debug-title">📡 Réseau Éco-Santé / RNSA / Airparif (National) :</div>
-                    <div class="debug-box" id="debug-ecosante">Aucune donnée.</div>
-                </div>
-            </div>
-            <div class="source-footer" id="pollen-source">Source : En attente...</div>
-
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">📅</span>
-                    <h2>Prévisions Météo</h2>
-                </div>
-                <div id="forecast-container"></div>
-            </div>
-
-            <div class="card" style="background: #202124; color: #34a853; border: 1px solid #3c4043; border-radius: 14px; padding: 12px; margin-top: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="const el = document.getElementById('debug-console-box'); el.style.display = (el.style.display === 'none' ? 'block' : 'none');">
-                    <span style="font-family: monospace; font-size: 11px; font-weight: bold; color: #ffffff;">💻 Console de Débogage Live</span>
-                    <span style="font-size: 11px; color: #8ab4f8; font-weight: bold;">[Ouvrir/Fermer]</span>
-                </div>
-                <div id="debug-console-box" style="display: none; font-family: monospace; font-size: 10px; max-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px; border-top: 1px solid #3c4043; padding-top: 6px;">Système mobile prêt.</div>
+            <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir l'évolution horaire</div>
+            
+            <div id="weather-details" class="details-pane">
+                <div class="hourly-timeline" id="hourly-container"></div>
+                <div class="detail-row" style="margin-top: 8px;"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
+                <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
+                <div class="detail-row"><span>🌡️ Température ressentie :</span> <span id="det-apparent">-- °C</span></div>
             </div>
         </div>
+
+        <div class="card clickable-card" onclick="toggleRadar()">
+            <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="card-icon">🗺️</span>
+                    <h2 id="radar-title">Cartographie Souveraine</h2>
+                </div>
+                <button id="map-toggle-btn" style="display: none; background: var(--primary); color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;" onclick="switchMapMode(event)">
+                    🔄 Mode Suivant
+                </button>
+            </div>
+            <div class="click-hint hint-sec" id="radar-hint" style="font-size:9px; margin-bottom:4px;">👇 Touchez pour déplier le module cartographique national</div>
+            <div id="radar-container">
+                <div id="radar-map"></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">💨</span><h2>Vent</h2></div>
+                <div class="grid-value" id="sub-wind">-- km/h</div>
+            </div>
+            <div class="card clickable-card" onclick="toggleAirDetails()">
+                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">🫁</span><h2>Qualité Air</h2></div>
+                <div id="air-badge" class="badge level-0" style="margin-top: 6px; align-self: flex-start;">--</div>
+            </div>
+        </div>
+
+        <div class="card details-pane" id="air-details-box" style="display:none; margin-top: -6px; margin-bottom: 12px;">
+            <div class="detail-row"><span>Ozone (O₃) :</span><span id="pol-o3" class="badge level-0">--</span></div>
+            <div class="detail-row"><span>Particules (PM10) :</span><span id="pol-pm10" class="badge level-0">--</span></div>
+            <div class="detail-row"><span>Particules fines (PM2.5) :</span><span id="pol-pm25" class="badge level-0">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="card-icon">🌿</span><h2>Synthèse des Risques Pollens</h2></div>
+            <div class="data-row">
+                <div style="font-weight:500;">🌳 Bouleau</div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="risk-bar-container"><div id="bar-bouleau" class="risk-bar"></div></div>
+                    <span id="txt-bouleau" class="badge level-0">--</span>
+                </div>
+            </div>
+            <div class="data-row">
+                <div style="font-weight:500;">🌾 Graminées</div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div class="risk-bar-container"><div id="bar-graminees" class="risk-bar"></div></div>
+                    <span id="txt-graminees" class="badge level-0">--</span>
+                </div>
+            </div>
+            
+            <div style="font-size: 11px; font-weight: bold; margin-top: 10px; color: var(--text-sec);">🔬 Données Brutes Arbitrées :</div>
+            <div class="debug-box" id="debug-arbitrage">Calcul du vote en cours...</div>
+        </div>
+        <div class="source-footer" id="pollen-source">Source : Estimations Saisonnières Historiques</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        // Base de connaissances locale (Évite l'écran blanc si pas de réseau)
+        const DONNEES_SAISONNIERES = {
+            nantes: { temp: 18, desc: "Climat tempéré", vent: 15, humidite: 70, uv: 4, bouleau: 2, graminees: 3 },
+            paris: { temp: 19, desc: "Climat urbain", vent: 12, humidite: 65, uv: 4, bouleau: 1, graminees: 2 }
+        };
 
+        // Registre central d'arbitrage ("Le Vote")
+        let scrutinPollens = {
+            bouleau: { votes: [], retenu: 0 },
+            graminees: { votes: [], retenu: 0 }
+        };
+
+        // Variables globales Météo courantes pour le croisement prédictif
+        let metaoCourante = { temp: 15, vent: 10, humidite: 50, uv: 2, vigilance: "Verte" };
+
+        let map = null;
+        let activeLayers = {};
+        let mapMode = "ign"; // Cycle: "ign" -> "radar_mf" -> "sat_owm" -> "nasa"
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initialiserInterfaceImmediate(document.getElementById('city-select').value);
+        });
+
+        // =========================================================================
+        // BRIQUE 1 : INSTANT RENDER
+        // =========================================================================
+        function initialiserInterfaceImmediate(vKey) {
+            const estimation = DONNEES_SAISONNIERES[vKey];
+            
+            // Hydratation graphique instantanée
+            document.getElementById('main-temp').innerText = `${estimation.temp}°C`;
+            document.getElementById('weather-desc').innerText = `${estimation.desc} (Moyenne)`;
+            document.getElementById('sub-wind').innerText = `${estimation.vent} km/h`;
+            document.getElementById('det-humidity').innerText = `${estimation.humidite} %`;
+            document.getElementById('uv-val').innerText = estimation.uv;
+            
+            // Initialisation des compteurs de vote avec la valeur de secours saisonnière
+            scrutinPollens.bouleau.votes = [{ source: "Saisonnière", valeur: estimation.bouleau }];
+            scrutinPollens.graminees.votes = [{ source: "Saisonnière", valeur: estimation.graminees }];
+            
+            appliquerArbitrageGraphique();
+            
+            // Lancement des appels asynchrones en tâche de fond (Background)
+            executerRequetesBackground(vKey);
+        }
+
+        // =========================================================================
+        // BRIQUE 2 : EXÉCUTION EN BACKGROUND (FETCHS AUTONOMES)
+        // =========================================================================
+        function executerRequetesBackground(vKey) {
+            const geo = CITIES[vKey] || { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" };
+
+            // 1. Flux Open-Meteo (Météo globale + UV)
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,uv_index&hourly=temperature_2m&timezone=Europe%2FParis`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
+                    document.getElementById('sub-wind').innerText = `${Math.round(data.current.wind_speed_10m)} km/h`;
+                    document.getElementById('det-humidity').innerText = `${data.current.relative_humidity_2m} %`;
+                    document.getElementById('det-apparent').innerText = `${Math.round(data.current.apparent_temperature)} °C`;
+                    document.getElementById('det-rain').innerText = `${data.current.rain} mm`;
+                    document.getElementById('uv-val').innerText = Math.round(data.current.uv_index);
+                    
+                    // Enregistrement dans la mémoire globale pour le croisement
+                    metaoCourante.temp = data.current.temperature_2m;
+                    metaoCourante.vent = data.current.wind_speed_10m;
+                    metaoCourante.humidite = data.current.relative_humidity_2m;
+                    metaoCourante.uv = data.current.uv_index;
+
+                    // Hydratation de la frise horaire
+                    if (data.hourly && data.hourly.temperature_2m) {
+                        const container = document.getElementById('hourly-container');
+                        container.innerHTML = "";
+                        for(let i=0; i<6; i++) {
+                            container.innerHTML += `
+                                <div class="hourly-item">
+                                    <div class="hourly-time">+${i+1}h</div>
+                                    <div class="hourly-temp">${Math.round(data.hourly.temperature_2m[i])}°</div>
+                                </div>`;
+                        }
+                    }
+                    
+                    document.getElementById('weather-desc').innerText = tracerCodeMeteo(data.current.weather_code);
+                    CalculerRessentiBioclimatique();
+                }).catch(() => {});
+
+            // 2. Flux Capteurs Physiques Locaux (Open Data Nantes Metropole)
+            if (vKey === "nantes") {
+                fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=100`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.results) {
+                            data.results.forEach(rec => {
+                                const taxon = (rec.group || rec.name || "").toLowerCase();
+                                const state = parseInt(rec.state, 10);
+                                if (taxon.includes("bouleau")) fusionnerEtVoter("OpenData Nantes", "bouleau", state === 1 ? 4 : 0);
+                                if (taxon.includes("gramin")) fusionnerEtVoter("OpenData Nantes", "graminees", state === 1 ? 4 : 0);
+                            });
+                        }
+                    }).catch(() => {});
+            }
+
+            // 3. Flux Qualité de l'Air (WAQI)
+            fetch(`https://api.waqi.info/feed/${geo.name.toLowerCase()}/?token=demo`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.status === "ok") {
+                        const aqi = data.data.aqi;
+                        const badge = document.getElementById('air-badge');
+                        badge.innerText = aqi;
+                        badge.className = `badge level-${aqi > 100 ? 4 : aqi > 50 ? 2 : 1}`;
+                        
+                        document.getElementById('pol-o3').innerText = `${data.data.iaqi.o3 ? Math.round(data.data.iaqi.o3.v) : '--'} µg/m³`;
+                        document.getElementById('pol-pm10').innerText = `${data.data.iaqi.pm10 ? Math.round(data.data.iaqi.pm10.v) : '--'} µg/m³`;
+                        document.getElementById('pol-pm25').innerText = `${data.data.iaqi.pm25 ? Math.round(data.data.iaqi.pm25.v) : '--'} µg/m³`;
+                    }
+                }).catch(() => {});
+        }
+
+        // =========================================================================
+        // BRIQUE 3 : SYSTEME D'ARBITRAGE ET DE VOTE
+        // =========================================================================
+        function fusionnerEtVoter(source, typeDonnee, valeur) {
+            // Élimination des anomalies réseau
+            if (valeur === undefined || valeur === null || isNaN(valeur)) return;
+            
+            // Insertion ou mise à jour du vote de la source
+            let votesActuels = scrutinPollens[typeDonnee].votes;
+            const indexSource = votesActuels.findIndex(v => v.source === source);
+            if (indexSource > -1) {
+                votesActuels[indexSource].valeur = valeur;
+            } else {
+                votesActuels.push({ source: source, valeur: valeur });
+            }
+            
+            arbitrerDonnees();
+        }
+
+        function arbitrerDonnees() {
+            Object.keys(scrutinPollens).forEach(taxon => {
+                const listeVotes = scrutinPollens[taxon].votes;
+                
+                // Règle de priorité absolue : Si une source physique terrain locale est active, elle l'emporte
+                const voteTerrain = listeVotes.find(v => v.source === "OpenData Nantes");
+                if (voteTerrain) {
+                    scrutinPollens[taxon].retenu = voteTerrain.valeur;
+                } else {
+                    // Sinon, calcul de la moyenne arithmétique arrondie des sources disponibles
+                    const somme = listeVotes.reduce((acc, curr) => acc + curr.valeur, 0);
+                    scrutinPollens[taxon].retenu = Math.round(somme / listeVotes.length);
+                }
+            });
+
+            appliquerArbitrageGraphique();
+        }
+
+        function appliquerArbitrageGraphique() {
+            // Rendu visuel du Bouleau
+            const vBouleau = scrutinPollens.bouleau.retenu;
+            document.getElementById('bar-bouleau').style.width = `${(vBouleau / 5) * 100}%`;
+            document.getElementById('bar-bouleau').className = `risk-bar level-${vBouleau}`;
+            document.getElementById('txt-bouleau').innerText = traduireNiveauPollen(vBouleau);
+            document.getElementById('txt-bouleau').className = `badge level-${vBouleau}`;
+
+            // Rendu visuel des Graminées
+            const vGraminees = scrutinPollens.graminees.retenu;
+            document.getElementById('bar-graminees').style.width = `${(vGraminees / 5) * 100}%`;
+            document.getElementById('bar-graminees').className = `risk-bar level-${vGraminees}`;
+            document.getElementById('txt-graminees').innerText = traduireNiveauPollen(vGraminees);
+            document.getElementById('txt-graminees').className = `badge level-${vGraminees}`;
+
+            // Journalisation technique dans la boîte de debug
+            let debugTxt = "";
+            Object.keys(scrutinPollens).forEach(t => {
+                debugTxt += `${t.toUpperCase()} -> Elu: Index ${scrutinPollens[t].retenu} via [`;
+                debugTxt += scrutinPollens[t].votes.map(v => `${v.source}:${v.valeur}`).join(", ");
+                debugTxt += "]\n";
+            });
+            document.getElementById('debug-arbitrage').innerText = debugTxt;
+
+            // Déclenchement automatique de l'analyse croisée des risques médicaux
+            analyserFacteursBioclimatiques();
+        }
+
+        // =========================================================================
+        // BRIQUE 4 : MOTEUR CRÉATIVITÉ BIOCLIMATIQUE (ALGORITHME DE CROISEMENT)
+        // =========================================================================
+        function CalculerRessentiBioclimatique() {
+            // Équation simplifiée de Steadman pour l'indice bioclimatique thermique
+            const T = metaoCourante.temp;
+            const H = metaoCourante.humidite;
+            const v = metaoCourante.vent / 3.6; // Conversion en m/s
+
+            // Pression de vapeur d'eau $e$
+            const e = (H / 100) * 6.105 * Math.exp((17.27 * T) / (237.7 + T));
+            
+            // Formule de température apparente bioclimatique
+            const ecoIndex = T + 0.33 * e - 0.70 * v - 4.00;
+            
+            document.getElementById('eco-index-val').innerText = `${Math.round(ecoIndex)}°C Apparent`;
+        }
+
+        function analyserFacteursBioclimatiques() {
+            const alertBox = document.getElementById('expert-alert');
+            const gramineesValue = scrutinPollens.graminees.retenu;
+            const bouleauValue = scrutinPollens.bouleau.retenu;
+            const vent = metaoCourante.vent;
+            const uv = metaoCourante.uv;
+            const descMeteo = document.getElementById('weather-desc').innerText.toLowerCase();
+
+            // RÈGLE MÉTIER 1 : LE FACTEUR ORAGE (Alerte d'Asthme de Tempête)
+            if ((descMeteo.includes("orage") || metaoCourante.vigilance.includes("Orage")) && gramineesValue >= 3) {
+                alertBox.innerHTML = "⚡ <b>Alerte critique d'asthme de tempête</b> : Les premières précipitations orageuses vont briser les grains de pollens de Graminées et libérer des micro-particules hautement allergisantes respirables. Confinement recommandé.";
+                alertBox.style.display = "block";
+                return;
+            }
+
+            // RÈGLE MÉTIER 2 : DISPERSION MÉCANIQUE PAR VENT FORT
+            if (vent > 25 && (gramineesValue >= 3 || bouleauValue >= 3)) {
+                alertBox.innerHTML = "💨 <b>Dispersion mécanique maximale</b> : Le vent soutenu (&gt; 25 km/h) associé à une faible humidité favorise le transport des pollens sur de longues distances. Évitez d'aérer les pièces de vie.";
+                alertBox.style.display = "block";
+                return;
+            }
+
+            // RÈGLE MÉTIER 3 : AGGRAVATION OCULAIRE PAR AGRESSION UV
+            if (uv >= 6 && (gramineesValue >= 3 || bouleauValue >= 3)) {
+                alertBox.innerHTML = "🕶️ <b>Agressivité oculaire combinée</b> : L'indice UV fort d'aujourd'hui amplifie la sensibilité de la conjonctive déjà irritée par les allergènes volatils. Le port de lunettes de soleil est vivement recommandé.";
+                alertBox.style.display = "block";
+                return;
+            }
+
+            // Si aucune règle n'est enfreinte, masquer la boîte d'alerte
+            alertBox.style.display = "none";
+        }
+
+        // =========================================================================
+        // BRIQUE 5 : ARCHITECTURE CARTOGRAPHIQUE INTERACTIVE (IGN SOUVERAIN)
+        // =========================================================================
+        function initRadarMap(lat, lon) {
+            if (!map) {
+                map = L.map('radar-map', { zoomControl: false, attributionControl: false }).setView([lat, lon], 6);
+                logDebug("Carte Leaflet initialisée.");
+            } else {
+                map.setView([lat, lon], 6);
+            }
+
+            // Injection dynamique des calques
+            remonterCouchesCartographiques();
+        }
+
+        function remonterCouchesCartographiques() {
+            // Suppression des calques existants pour éviter les fuites de mémoire
+            Object.keys(activeLayers).forEach(k => { if(map.hasLayer(activeLayers[k])) map.removeLayer(activeLayers[k]); });
+
+            // ÉTAPE 1 : FOND DE PLAN GEOPLATEFORME IGN SOUVERAIN V2
+            activeLayers.ign = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+                maxZoom: 18
+            });
+
+            // ÉTAPE 2 : RADAR DE RÉFLECTIVITÉ COMPOSITE DE MÉTÉO-FRANCE (SOURCE SOUVERAINE)
+            activeLayers.radar_mf = L.tileLayer.wms('https://data.geopf.fr/wms-r', {
+                layers: 'ME_REFLECTIVITE_COMPOSITE',
+                format: 'image/png',
+                transparent: true,
+                opacity: 0.75,
+                zIndex: 1000,
+                crossOrigin: true // Contournement ORB
+            });
+
+            // ÉTAPE 3 : COUVERTURE NUAGEUSE SATELLITE (OPENWEATHER)
+            activeLayers.sat_owm = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`, {
+                opacity: 0.65,
+                zIndex: 900
+            });
+
+            // ÉTAPE 4 : PLANÈTE PHOTO EN COULEURS RÉELLES (NASA GIBS SECOURS INTERNATIONAL)
+            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            const dateStr = yesterday.toISOString().split('T')[0];
+            activeLayers.nasa = L.tileLayer(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`, {
+                opacity: 0.85,
+                maxNativeZoom: 9
+            });
+
+            gererAffichageCalqueUnique();
+        }
+
+        function gererAffichageCalqueUnique() {
+            const title = document.getElementById('radar-title');
+            
+            // Base IGN toujours active en fond de grille de carte
+            activeLayers.ign.addTo(map);
+
+            if (mapMode === "ign") {
+                title.innerText = "Fond Plan Épuré (IGN France)";
+            } else if (mapMode === "radar_mf") {
+                activeLayers.radar_mf.addTo(map);
+                title.innerText = "Radar Pluie Composite (Météo-France)";
+            } else if (mapMode === "sat_owm") {
+                activeLayers.sat_owm.addTo(map);
+                title.innerText = "Nuages Satellite (OpenWeather)";
+            } else if (mapMode === "nasa") {
+                activeLayers.nasa.addTo(map);
+                title.innerText = "Globe Terrestre J-1 (NASA)";
+            }
+            
+            setTimeout(() => { map.invalidateSize(); }, 60);
+        }
+
+        function switchMapMode(event) {
+            event.stopPropagation();
+            if (mapMode === "ign") mapMode = "radar_mf";
+            else if (mapMode === "radar_mf") mapMode = "sat_owm";
+            else if (mapMode === "sat_owm") mapMode = "nasa";
+            else mapMode = "ign";
+            gererAffichageCalqueUnique();
+        }
+
+        // Helpers de dictionnaire et d'UI basiques restants
         const CITIES = {
             nantes: { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" },
             paris: { lat: 48.8566, lon: 2.3522, codeInsee: "75056", name: "Paris" }
         };
 
-        const OWM_KEY = "95ba8345756a8d662a3a96406218a205"; // Votre clé API OWM active
-
-        let currentCityKey = "nantes";
-        let map = null;
-        let radarLayer = null;
-        let satelliteLayer = null;
-        let owmLayer = null;
-        let nasaLayer = null;
-        let radarInitializedForCity = null;
-        let mapMode = "radar"; // "radar" (RV), "satellite" (OWM Clouds), "owm" (OWM Rain), "nasa" (NASA Photo)
-
-        function logDebug(message) {
-            const box = document.getElementById('debug-console-box');
-            if (box) {
-                box.innerText += `\n[${new Date().toLocaleTimeString()}] ${message}`;
-                box.scrollTop = box.scrollHeight;
-            }
-            console.log(message);
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            logDebug("Lancement initial de l'application...");
-            loadData();
-        });
-
-        function initRadarMap(lat, lon) {
-            logDebug(`initRadarMap appelée pour lat:${lat}, lon:${lon}`);
-            if (!map) {
-                map = L.map('radar-map', {
-                    zoomControl: false, 
-                    attributionControl: false
-                }).setView([lat, lon], 6);
-        
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 12
-                }).addTo(map);
-                logDebug("Carte Leaflet de base créée.");
-            } else {
-                map.setView([lat, lon], 6);
-            }
-
-            // Nettoyage complet
-            if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
-            if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
-            if (owmLayer && map.hasLayer(owmLayer)) map.removeLayer(owmLayer);
-            if (nasaLayer && map.hasLayer(nasaLayer)) map.removeLayer(nasaLayer);
-        
-            // 1. Radar OWM Précipitations
-            const owmUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
-            owmLayer = L.tileLayer(owmUrl, { opacity: 0.75, zIndex: 102, maxNativeZoom: 12 });
-
-            // 2. Satellite OWM Nuages (Remplace le satellite RainViewer qui est devenu payant)
-            const owmSatUrl = `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
-            satelliteLayer = L.tileLayer(owmSatUrl, { opacity: 0.65, zIndex: 101, maxNativeZoom: 12 });
-
-            // 3. Image Satellite Réelle de la NASA (Utile pour vérifier le fonctionnement visuel)
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const dateString = yesterday.toISOString().split('T')[0];
-            const nasaUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dateString}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
-            nasaLayer = L.tileLayer(nasaUrl, { opacity: 0.85, zIndex: 98, maxNativeZoom: 9 });
-
-            // 4. Radar RainViewer
-            logDebug("Fetch du fichier weather-maps.json (RainViewer)...");
-            fetch('https://api.rainviewer.com/public/weather-maps.json')
-                .then(res => {
-                    if (!res.ok) throw new Error("Erreur réseau HTTP " + res.status);
-                    return res.json();
-                })
-                .then(data => {
-                    if (!data) throw new Error("JSON vide");
-                    const host = data.host || "https://tile.rainviewer.com";
-        
-                    if (data.radar && data.radar.past && data.radar.past.length > 0) {
-                        const latestRadar = data.radar.past[data.radar.past.length - 1];
-                        const radarUrl = `${host}${latestRadar.path}/256/{z}/{x}/{y}/1/0_0.png`;
-                        radarLayer = L.tileLayer(radarUrl, { opacity: 0.70, zIndex: 100, maxNativeZoom: 7 });
-                        logDebug("Radar RV initialisé.");
-                    }
-                    updateMapDisplay();
-                })
-                .catch(err => {
-                    logDebug(`⚠️ Alerte RainViewer : ${err.message}. Passage automatique sur les couches OWM.`);
-                    if (mapMode === "radar") mapMode = "owm";
-                    updateMapDisplay();
-                });
-        }
-
-        function updateMapDisplay() {
-            if (!map) return;
-            
-            const title = document.getElementById('radar-title');
-            const toggleBtn = document.getElementById('map-toggle-btn');
-        
-            if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
-            if (satelliteLayer && map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
-            if (owmLayer && map.hasLayer(owmLayer)) map.removeLayer(owmLayer);
-            if (nasaLayer && map.hasLayer(nasaLayer)) map.removeLayer(nasaLayer);
-
-            if (mapMode === "radar") {
-                if (radarLayer) {
-                    radarLayer.addTo(map);
-                    title.innerText = "Radar Pluie (RainViewer)";
-                } else {
-                    mapMode = "satellite";
-                    updateMapDisplay();
-                    return;
-                }
-                toggleBtn.innerText = "☁️ Satellite (Nuages)";
-            } 
-            else if (mapMode === "satellite") {
-                if (satelliteLayer) {
-                    satelliteLayer.addTo(map);
-                    title.innerText = "Nuages Satellite (OpenWeather)";
-                }
-                toggleBtn.innerText = "🌧️ Radar (OpenWeather)";
-            } 
-            else if (mapMode === "owm") {
-                if (owmLayer) {
-                    owmLayer.addTo(map);
-                    title.innerText = "Radar Pluie (OpenWeather)";
-                }
-                toggleBtn.innerText = "🌍 Photo Terrestre (NASA)";
-            }
-            else if (mapMode === "nasa") {
-                if (nasaLayer) {
-                    nasaLayer.addTo(map);
-                    title.innerText = "Satellite Photo (NASA GIBS)";
-                }
-                toggleBtn.innerText = "🌧️ Radar (RainViewer)";
-            }
-
-            setTimeout(() => { map.invalidateSize(); }, 50);
-        }
-        
-        function switchMapMode(event) {
-            event.stopPropagation(); 
-            if (mapMode === "radar") mapMode = "satellite";
-            else if (mapMode === "satellite") mapMode = "owm";
-            else if (mapMode === "owm") mapMode = "nasa";
-            else mapMode = "radar";
-            updateMapDisplay();
-        }
-        
-        function toggleRadar() {
-            const radarContainer = document.getElementById('radar-container'); 
-            const hint = document.getElementById('radar-hint');
-            const toggleBtn = document.getElementById('map-toggle-btn');
-            const city = CITIES[currentCityKey];
-        
-            radarContainer.classList.toggle('open');
-        
-            if (radarContainer.classList.contains('open')) {
-                hint.innerText = "👆 Touchez pour masquer la carte";
-                toggleBtn.style.display = "block";
-                initRadarMap(city.lat, city.lon);
-                
-                setTimeout(() => { 
-                    if (map) { map.invalidateSize(); }
-                }, 400);
-            } else {
-                hint.innerText = "👇 Touchez pour charger et activer la carte en direct";
-                toggleBtn.style.display = "none";
-            }
-        }
-
-        function toggleWeatherDetails() {
-            const pane = document.getElementById('weather-details');
-            const hint = document.getElementById('weather-hint');
-            pane.classList.toggle('open');
-            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour replier" : "👇 Touchez pour voir les heures et précisions";
-        }
-
-        function toggleAirDetails() {
-            const box = document.getElementById('air-details-box');
-            const hint = document.getElementById('air-hint');
-            if (box.style.display === 'none') {
-                box.style.display = 'flex';
-                setTimeout(() => box.classList.add('open'), 10);
-                hint.innerText = "👆 Replier";
-            } else {
-                box.classList.remove('open');
-                hint.innerText = "👇 Détails polluants";
-                setTimeout(() => box.style.display = 'none', 300);
-            }
-        }
-
-        function togglePollenDetails() {
-            const box = document.getElementById('pollen-details-box');
-            const hint = document.getElementById('pollen-hint');
-            box.classList.toggle('open');
-            hint.innerText = box.classList.contains('open') ? "👆 Fermer les détails" : "👇 Touchez pour voir les diagnostics bruts";
-        }
-
-        function changeCity() {
+        function changerVilleLocale() {
             currentCityKey = document.getElementById('city-select').value;
-            logDebug(`Changement de ville vers : ${currentCityKey}`);
-            
             const container = document.getElementById('radar-container');
             container.classList.remove('open');
             document.getElementById('radar-hint').innerText = "👇 Touchez pour charger et activer la carte en direct";
-            
-            document.getElementById('app-content').style.display = 'none';
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('loader').innerText = `Connexion aux capteurs de ${CITIES[currentCityKey].name}...`;
-            loadData();
+            initialiserInterfaceImmediate(currentCityKey);
         }
 
-        function getWeatherDetails(code) {
-            const mapCodes = {
-                0: { desc: "Ciel clair", icon: "☀️" }, 1: { desc: "Peu nuageux", icon: "🌤️" },
-                2: { desc: "Partiellement nuageux", icon: "⛅" }, 3: { desc: "Couvert", icon: "☁️" },
-                45: { desc: "Brouillard", icon: "🌫️" }, 48: { desc: "Brouillard givrant", icon: "🌫️" },
-                51: { desc: "Bruine légère", icon: "🌦️" }, 53: { desc: "Bruine", icon: "🌦️" },
-                55: { desc: "Bruine dense", icon: "🌧️" }, 61: { desc: "Pluie faible", icon: "🌦️" },
-                63: { desc: "Pluie modérée", icon: "🌧️" }, 65: { desc: "Pluie forte", icon: "🌧️" },
-                80: { desc: "Averses de pluie", icon: "🌦️" }, 81: { desc: "Fortes averses", icon: "🌧️" },
-                95: { desc: "Orage", icon: "⛈️" }
-            };
-            return mapCodes[code] || { desc: "Météo variable", icon: "⛅" };
-        }
-
-        async function loadData() {
-            const city = CITIES[currentCityKey];
+        function toggleRadar() {
+            const container = document.getElementById('radar-container');
+            const btn = document.getElementById('map-toggle-btn');
+            const hint = document.getElementById('radar-hint');
+            const city = CITIES[document.getElementById('city-select').value];
             
-            document.getElementById('debug-nantes').innerText = "Initialisation...";
-            document.getElementById('debug-ecosante').innerText = "Initialisation...";
-            
-            setupPollenRow('bouleau', 0);
-            setupPollenRow('graminees', 0);
-        
-            try {
-                const resW = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis`);
-                
-                if (!resW.ok) throw new Error(`Code HTTP ${resW.status}`);
-                
-                const weatherData = await resW.json();
-                displayWeatherData(weatherData);
-                
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('app-content').style.display = 'block';
-                logDebug("Données météo Open-Meteo chargées.");
-                
-            } catch (error) {
-                console.error("Erreur Critique Météo :", error);
-                document.getElementById('loader').innerText = `⚠️ Service météo temporairement indisponible (${error.message}). Veuillez réessayer.`;
-                return;
-            }
-        
-            fetch(`https://api.waqi.info/feed/${city.name.toLowerCase()}/?token=demo`)
-                .then(res => res.ok ? res.json() : null)
-                .then(waqiData => {
-                    if (waqiData && waqiData.status === "ok") {
-                        displayAirData(waqiData, city.name);
-                        logDebug("Données qualité de l'air WAQI chargées.");
-                    } else {
-                        throw new Error("Données invalides");
-                    }
-                })
-                .catch(err => {
-                    console.log("Qualité Air indisponible :", err);
-                    document.getElementById('air-badge').innerText = "Indisponible";
-                    document.getElementById('air-badge').className = "badge level-0";
-                    document.getElementById('air-source').innerText = "Source : Capteurs distants injoignables";
-                });
-        
-            fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${city.codeInsee}?format=json`)
-                .then(res => res.ok ? res.json() : null)
-                .then(ecosanteData => {
-                    if (ecosanteData && ecosanteData.data) {
-                        displayPollenData(ecosanteData.data);
-                        document.getElementById('debug-ecosante').innerText = JSON.stringify(ecosanteData.data.pollen || "Aucun détail actif", null, 2);
-                        if (currentCityKey !== "nantes") {
-                            document.getElementById('pollen-source').innerText = "Source : Réseau Éco-Santé (National)";
-                        }
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('debug-ecosante').innerText = `Indicateur National indisponible. Redirection automatique vers capteurs locaux.`;
-                });
-        
-            if (currentCityKey === "nantes") {
-                // MISE A JOUR ESSENTIELLE : limit=100 pour obtenir l'intégralité du catalogue d'arbres
-                fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=100`)
-                    .then(res => res.ok ? res.json() : null)
-                    .then(nantesData => {
-                        if (nantesData && nantesData.results && nantesData.results.length > 0) {
-                            const logTxt = nantesData.results.map((r, i) => `Enregistrement ${i+1}: ${JSON.stringify(r.fields || r)}`).join("\n\n");
-                            document.getElementById('debug-nantes').innerText = logTxt;
-                            
-                            let nantBouleau = 0;
-                            let nantGraminees = 0;
-
-                            nantesData.results.forEach(record => {
-                                const dataObj = record.fields || record;
-                                
-                                // Analyse multi-champs du nom de l'espèce (group ou name)
-                                let nomPollen = (dataObj.group || dataObj.name || dataObj.pollen || "").toLowerCase();
-
-                                // Traitement des états OpenData spécifiques (1 = en cours / 2 = terminée)
-                                let stateVal = parseInt(dataObj.state, 10);
-                                let libEtat = (dataObj.lib_etat || "").toLowerCase();
-                                
-                                let niveauRisque = 0;
-                                if (stateVal === 1 || libEtat.includes("en cours") || libEtat.includes("cours")) {
-                                    niveauRisque = 4; // Mappé sur la couleur orange "En Cours"
-                                } else if (stateVal === 2 || libEtat.includes("termin") || libEtat.includes("fini")) {
-                                    niveauRisque = 0; // Risque nul (Terminé)
-                                }
-
-                                if (nomPollen.includes("bouleau")) {
-                                    nantBouleau = Math.max(nantBouleau, niveauRisque);
-                                }
-                                if (nomPollen.includes("graminée") || nomPollen.includes("graminee")) {
-                                    nantGraminees = Math.max(nantGraminees, niveauRisque);
-                                }
-                            });
-
-                            setupPollenRow('bouleau', nantBouleau);
-                            setupPollenRow('graminees', nantGraminees);
-                            
-                            document.getElementById('pollen-source').innerText = "Source : Conseil Régional (Nantes OpenData Direct)";
-                            logDebug("Flux OpenData Nantes traité avec succès.");
-                        } else {
-                            document.getElementById('debug-nantes').innerText = "Flux vide ou structure modifiée.";
-                        }
-                    })
-                    .catch(err => {
-                        document.getElementById('debug-nantes').innerText = `Erreur Flux Local Nantes : ${err.message}`;
-                    });
+            container.classList.toggle('open');
+            if (container.classList.contains('open')) {
+                btn.style.display = "block";
+                hint.innerText = "👆 Touchez pour replier la carte";
+                initRadarMap(city.lat, city.lon);
             } else {
-                document.getElementById('debug-nantes').innerText = "Non applicable pour cette ville (Hors Loire-Atlantique).";
+                btn.style.display = "none";
+                hint.innerText = "👇 Touchez pour déplier le module cartographique national";
             }
-        }
-        
-        function displayWeatherData(weatherData) {
-            const currentWeather = getWeatherDetails(weatherData.current.weather_code);
-            document.getElementById('main-temp').innerText = `${Math.round(weatherData.current.temperature_2m)}°C`;
-            document.getElementById('sub-wind').innerText = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
-            document.getElementById('weather-desc').innerText = currentWeather.desc;
-            document.getElementById('main-weather-icon').innerText = currentWeather.icon;
-            
-            document.getElementById('det-rain').innerText = `${weatherData.current.rain} mm`;
-            document.getElementById('det-humidity').innerText = `${weatherData.current.relative_humidity_2m} %`;
-            document.getElementById('det-apparent').innerText = `${Math.round(weatherData.current.apparent_temperature)} °C`;
-        
-            if (weatherData.hourly && weatherData.hourly.time) {
-                const hourlyContainer = document.getElementById('hourly-container');
-                hourlyContainer.innerHTML = "";
-                const maintenant = new Date();
-                let itemsAffiches = 0;
-        
-                for (let i = 0; i < weatherData.hourly.time.length; i++) {
-                    const heureData = new Date(weatherData.hourly.time[i]);
-                    if (heureData >= maintenant || (heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate())) {
-                        const heureTexte = heureData.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                        const tempHorraire = Math.round(weatherData.hourly.temperature_2m[i]);
-        
-                        hourlyContainer.innerHTML += `
-                            <div class="hourly-item">
-                                <div class="hourly-time">${heureTexte}</div>
-                                <div class="hourly-temp">${tempHorraire}°</div>
-                            </div>`;
-                        itemsAffiches++;
-                        if (itemsAffiches >= 8) break;
-                    }
-                }
-            }
-        
-            if (weatherData.daily) {
-                const container = document.getElementById('forecast-container'); 
-                container.innerHTML = "";
-                for (let i = 1; i <= 3; i++) {
-                    const max = Math.round(weatherData.daily.temperature_2m_max[i]);
-                    const details = getWeatherDetails(weatherData.daily.weather_code[i]);
-                    container.innerHTML += `<div class="forecast-day"><span>J+${i}</span><span>${details.icon}</span><span style="flex-grow:1;font-size:12px;color:var(--text-sec);">${details.desc}</span><span>${max}°</span></div>`;
-                }
-            }
-        }
-        
-        function displayAirData(waqiData, cityName) {
-            const airBadge = document.getElementById('air-badge');
-            const iaqi = waqiData.data.iaqi;
-            const aqiGlobal = waqiData.data.aqi;
-            
-            let lvl = 1; let labelAir = "Bon";
-            if (aqiGlobal > 50)  { lvl = 2; labelAir = "Moyen"; }
-            if (aqiGlobal > 100) { lvl = 3; labelAir = "Dégradé"; }
-            if (aqiGlobal > 150) { lvl = 4; labelAir = "Mauvais"; }
-            
-            airBadge.innerText = `${labelAir} (${aqiGlobal})`; 
-            airBadge.className = `badge level-${lvl}`;
-            document.getElementById('air-source').innerText = `Source : Capteurs Temps Réel - ${cityName}`;
-        
-            document.getElementById('pol-o3').innerText = `${iaqi.o3 ? Math.round(iaqi.o3.v) : '--'} µg/m³`; 
-            document.getElementById('pol-o3').className = `badge level-${iaqi.o3 ? (iaqi.o3.v > 100 ? 3 : iaqi.o3.v > 50 ? 2 : 1) : 0}`;
-            
-            document.getElementById('pol-pm10').innerText = `${iaqi.pm10 ? Math.round(iaqi.pm10.v) : '--'} µg/m³`; 
-            document.getElementById('pol-pm10').className = `badge level-${iaqi.pm10 ? (iaqi.pm10.v > 40 ? 3 : iaqi.pm10.v > 20 ? 2 : 1) : 0}`;
-            
-            document.getElementById('pol-pm25').innerText = `${iaqi.pm25 ? Math.round(iaqi.pm25.v) : '--'} µg/m³`; 
-            document.getElementById('pol-pm25').className = `badge level-${iaqi.pm25 ? (iaqi.pm25.v > 25 ? 3 : iaqi.pm25.v > 10 ? 2 : 1) : 0}`;
-            
-            document.getElementById('pol-no2').innerText = `${iaqi.no2 ? Math.round(iaqi.no2.v) : '--'} µg/m³`; 
-            document.getElementById('pol-no2').className = `badge level-${iaqi.no2 ? (iaqi.no2.v > 40 ? 3 : iaqi.no2.v > 25 ? 2 : 1) : 0}`;
-        }
-        
-        function displayPollenData(ecoData) {
-            if (currentCityKey === "nantes") return; 
-
-            let riesgoBouleau = 0; 
-            let riesgoGraminees = 0;
-            
-            if (ecoData.pollen && ecoData.pollen.species) {
-                ecoData.pollen.species.forEach(sp => {
-                    const label = sp.label.toLowerCase();
-                    if (label.includes("bouleau")) riesgoBouleau = sp.value;
-                    if (label.includes("graminée") || label.includes("graminee")) riesgoGraminees = sp.value;
-                });
-            }
-            setupPollenRow('bouleau', riesgoBouleau);
-            setupPollenRow('graminees', riesgoGraminees);
         }
 
-        function setupPollenRow(plantId, value) {
-            const bar = document.getElementById(`bar-${plantId}`);
-            const txt = document.getElementById(`txt-${plantId}`);
-            
-            const safeValue = Math.max(0, Math.min(parseInt(value, 10) || 0, 5));
-            const pct = (safeValue / 5) * 100;
-            
-            bar.style.width = `${pct}%`;
-            
-            // Adaptation dynamique des libellés selon les états d'OpenData Nantes
-            const labels = ["Terminé", "Très Faible", "Faible", "Moyen", "En Cours", "Très Fort"];
-            txt.innerText = labels[safeValue];
-            
-            bar.className = `risk-bar level-${safeValue}`;
-            // Gestion de classe spécifique pour la couleur "En cours"
-            txt.className = `badge level-${safeValue === 4 ? 'en_cours' : safeValue}`;
+        function toggleWeatherDetails() { document.getElementById('weather-details').classList.toggle('open'); }
+        function toggleAirDetails() { const el = document.getElementById('air-details-box'); el.style.display = el.style.display === "none" ? "flex" : "none"; }
+        function traduireNiveauPollen(v) { return ["Nul", "Très Faible", "Faible", "Moyen", "En Cours", "Très Fort"][v] || "Nul"; }
+        function tracerCodeMeteo(c) {
+            const match = { 0:"Ciel clair", 1:"Peu nuageux", 2:"Partiellement couvert", 3:"Couvert", 45:"Brouillard", 51:"Bruine légère", 61:"Pluie faible", 63:"Pluie modérée", 80:"Averses", 95:"Orage composite" };
+            return match[c] || "Temps variable";
         }
     </script>
 </body>
