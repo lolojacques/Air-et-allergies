@@ -52,7 +52,7 @@
         .details-pane.open { display: flex; }
         
         .detail-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; align-items: center; }
-        .hourly-timeline { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px; width: 100%; scrollbar-width: none; }
+        .hourly-timeline { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px; width: 100%; scrollbar-width: none; border-top: 1px solid rgba(0,0,0,0.05); }
         .hourly-item { display: flex; flex-direction: column; align-items: center; background: rgba(255, 255, 255, 0.5); padding: 6px 8px; border-radius: 12px; min-width: 52px; }
         .hourly-time { font-size: 10px; font-weight: 600; color: rgba(4, 30, 73, 0.7); }
         .hourly-temp { font-size: 12px; font-weight: 700; color: #041e49; }
@@ -122,9 +122,28 @@
 
             <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir les détails et indices croisés</div>
         </div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">💨</span><h2>Vent</h2></div>
+                <div class="grid-value" id="sub-wind">-- km/h</div>
+                <div style="font-size: 10px; color: var(--text-sec); margin-top: 4px;">Vitesse instantanée</div>
+            </div>
+            
+            <div class="card clickable-card" onclick="toggleAirDetails()" id="air-card" style="border-left: 3px solid var(--primary);">
+                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">🫁</span><h2>Qualité Air</h2></div>
+                <div id="air-badge" class="badge level-0" style="margin-top: 4px; align-self: flex-start;">--</div>
+                <div class="click-hint hint-sec" id="air-hint" style="margin-top: 6px; text-align: left;">👇 Voir les polluants</div>
+                
+                <div class="details-pane" id="air-details-box" onclick="event.stopPropagation();">
+                    <div class="detail-row" style="font-size:11px; margin-top:4px;"><span>O₃ :</span><b id="pol-o3">--</b></div>
+                    <div class="detail-row" style="font-size:11px;"><span>PM10 :</span><b id="pol-pm10">--</b></div>
+                    <div class="detail-row" style="font-size:11px;"><span>PM2.5 :</span><b id="pol-pm25">--</b></div>
+                </div>
+            </div>
+        </div>
         <div class="card">
-            <div class="card-header">
-                <span class="hourly-timeline-wrapper">📅</span>
+            <div class="hourly-timeline-wrapper">
+                <span class="card-header">📅</span>
                 <h2>Prévisions Météo</h2>
             </div>
             <div id="forecast-container"></div>
@@ -144,26 +163,6 @@
             <div class="click-hint hint-sec" id="radar-hint" style="font-size:9px; margin-bottom:4px;">👇 Touchez pour déplier le module cartographique</div>
             <div id="radar-container">
                 <div id="radar-map"></div>
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="card">
-                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">💨</span><h2>Vent</h2></div>
-                <div class="grid-value" id="sub-wind">-- km/h</div>
-                <div style="font-size: 10px; color: var(--text-sec); margin-top: 4px;">Vitesse instantanée</div>
-            </div>
-            
-            <div class="card clickable-card" onclick="toggleAirDetails()" id="air-card" style="border-left: 3px solid var(--primary);">
-                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">🫁</span><h2>Qualité Air</h2></div>
-                <div id="air-badge" class="badge level-0" style="margin-top: 4px; align-self: flex-start;">--</div>
-                <div class="click-hint hint-sec" id="air-hint" style="margin-top: 6px; text-align: left;">👇 Voir les polluants</div>
-                
-                <div class="details-pane" id="air-details-box" onclick="event.stopPropagation();">
-                    <div class="detail-row" style="font-size:11px; margin-top:4px;"><span>O₃ :</span><b id="pol-o3">--</b></div>
-                    <div class="detail-row" style="font-size:11px;"><span>PM10 :</span><b id="pol-pm10">--</b></div>
-                    <div class="detail-row" style="font-size:11px;"><span>PM2.5 :</span><b id="pol-pm25">--</b></div>
-                </div>
             </div>
         </div>
 
