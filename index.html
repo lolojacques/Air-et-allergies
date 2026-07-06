@@ -260,7 +260,8 @@
             const geo = CITIES[vKey] || { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" };
 
             // 1. Flux Open-Meteo
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,uv_index&hourly=temperature_2m&timezone=Europe%2FParis`)
+            // URL complète à utiliser pour Open-Meteo
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,weather_code&daily=temperature_2m_max,uv_index&hourly=temperature_2m,weather_code&timezone=Europe%2FParis`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
@@ -277,7 +278,7 @@
 
                     const container = document.getElementById('hourly-container');
                     container.innerHTML = "";
-                    for(let i=0; i<6; i++) {
+                    for(let i=0; i<10; i++) {
                         container.innerHTML += `
                             <div class="hourly-item">
                                 <div class="hourly-time">+${i+1}h</div>
