@@ -117,9 +117,8 @@
                 <div class="detail-row" style="margin-top: 4px;"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
                 <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
                 <div class="detail-row"><span>☀️ Ressenti thermique :</span> <span id="det-apparent">-- °C</span></div>
-            </div>
                 <div id="expert-alert" class="expert-alert-box" onclick="event.stopPropagation();">Analyse de l'index croisé...</div>
-            </div>
+ 
 
             <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir les détails et indices croisés</div>
         </div>
@@ -225,7 +224,6 @@
             nantes: { temp: 18, desc: "Climat tempéré", vent: 15, humidite: 70, uv: 4, bouleau: 2, graminees: 3 },
             paris: { temp: 19, desc: "Climat urbain", vent: 12, humidite: 65, uv: 4, bouleau: 1, graminees: 2 }
         };
-
         let currentCityKey = "nantes";
         let map = null;
         let activeLayers = {};
