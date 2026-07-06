@@ -638,7 +638,26 @@
                     setTimeout(() => {
                         if (!testMaps.ign) {
                             testMaps.ign = L.map('map-test-ign', {zoomControl:false, attributionControl:false}).setView([city.lat, city.lon], 6);
-                            L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}').addTo(testMaps.ign);
+                            let radarMF = L.tileLayer('https://data.geopf.fr/wms-r', {
+                                                            layers: 'ME_REFLECTIVITE_COMPOSITE',
+                                                            format: 'image/png',
+                                                            transparent: true,
+                                                            opacity: 0.75,
+                                                            zIndex: 1000,
+                                                            crossOrigin: true // Protection contre le blocage ORB
+                                                        });
+                                                        
+                            radarMF.addTo(testMaps.ign);
+                            / Ajout de la couche Satellite/Nuages Météo-France
+                            let satelliteMF = L.tileLayer.('https://data.geopf.fr/wms-r', {
+                                layers: 'CLOUD_COVER', // Ou la couche spécifique selon le catalogue (ex: CLOUD_COVER)
+                                format: 'image/png',
+                                transparent: true,
+                                opacity: 0.70,
+                                zIndex: 900,
+                                crossOrigin: true
+                            });
+                            satelliteMF.addTo(testMaps.ign);
                         } else { testMaps.ign.setView([city.lat, city.lon], 6); testMaps.ign.invalidateSize(); }
 
                         if (!testMaps.rv) {
