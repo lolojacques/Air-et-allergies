@@ -260,10 +260,27 @@
 
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
+            // --- DONNÉES SAISONNIÈRES DE SECOURS (FALLBACK LOCAL) ---
             const DONNEES_SAISONNIERES = {
                 nantes: { temp: 18, desc: "Climat tempéré", vent: 15, humidite: 70, uv: 4, bouleau: 2, graminees: 3 },
                 paris: { temp: 19, desc: "Climat urbain", vent: 12, humidite: 65, uv: 4, bouleau: 1, graminees: 2 }
             };
+            
+            /*const DONNEES_SAISONNIERES = {
+                // Indexation par mois (0 = Janvier, 11 = Décembre)
+                0:  { atmo: "Bon",     pollens: { "Cupressacées": 1, "Noisetier": 2 } },
+                1:  { atmo: "Moyen",   pollens: { "Noisetier": 3, "Aulne": 3, "Cupressacées": 2 } },
+                2:  { atmo: "Moyen",   pollens: { "Peuplier": 2, "Saule": 2, "Bouleau": 1, "Frêne": 2 } },
+                3:  { atmo: "Moyen",   pollens: { "Bouleau": 4, "Platane": 3, "Chêne": 2, "Frêne": 3 } },
+                4:  { atmo: "Moyen",   pollens: { "Graminées": 4, "Chêne": 3, "Olivier": 1, "Oseille": 2 } },
+                5:  { atmo: "Dégradé",  pollens: { "Graminées": 5, "Olivier": 2, "Oseille": 2, "Plantain": 2 } },
+                6:  { atmo: "Dégradé",  pollens: { "Graminées": 3, "Châtaignier": 3, "Armoise": 1 } },
+                7:  { atmo: "Bon",     pollens: { "Graminées": 2, "Armoise": 2, "Chénopodes": 2 } },
+                8:  { atmo: "Bon",     pollens: { "Ambroisie": 4, "Armoise": 2, "Graminées": 1 } },
+                9:  { atmo: "Bon",     pollens: { "Ambroisie": 2, "Chénopodes": 1 } },
+                10: { atmo: "Bon",     pollens: { "Cèdre": 1 } },
+                11: { atmo: "Bon",     pollens: { "Cupressacées": 1 } }
+            };*/
             let currentCityKey = "nantes";
             let map = null;
             let activeLayers = {};
@@ -406,6 +423,7 @@
                 
                 // CORRECTIF 3 : Réintégration complète de  Éco-Santé National
                 // Nouvelle URL officielle (remplace le domaine écosanté obsolète)
+                const insee=city.codeInsee;
                 fetch(`https://api.atmo-france.org/v1/indicators/commune/${insee}/pollens`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
@@ -426,7 +444,7 @@
                         document.getElementById('debug-ecosante').innerText = "Indicateur National indisponible en direct. Maintien du vote saisonnier.";
                     });
             }
-
+            
             function fusionnerEtVoter(source, typeDonnee, valeur) {
                 if (valeur === undefined || valeur === null || isNaN(valeur)) return;
                 let votesActuels = scrutinPollens[typeDonnee].votes;
