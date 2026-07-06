@@ -159,16 +159,17 @@
                     <div class="detail-row"><span>☀️ Ressenti thermique :</span> <strong id="det-apparent">-- °C</strong></div>
                 </div>
                 <div class="click-hint" id="weather-hint">👇 Touchez pour les détails et indices croisés</div>
-                
+            </div>                
             <div id="expert-alert" class="expert-alert-box" onclick="event.stopPropagation();">Analyse de l'index croisé...</div>
-        </div>
+
             <div class="grid">
+                <!-- VENT -->
                 <div class="card">
                     <div class="card-header" style="margin-bottom:8px; border:none; padding:0;"><span class="card-icon">💨</span><h2>Vent</h2></div>
                     <div class="grid-value" id="sub-wind">-- km/h</div>
                     <div style="font-size: 10px; color: var(--text-sec); margin-top: 4px;">Vitesse instantanée</div>
                 </div>
-                
+                <!-- Qualité AIR -->
                 <div class="card clickable-card" onclick="toggleAirDetails()" id="air-card" style="border-left: 3px solid var(--primary);">
                     <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
                         <span class="card-icon">🫁</span><h2>Qualité Air</h2>
