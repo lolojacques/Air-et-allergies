@@ -95,10 +95,10 @@
             <div id="main-weather-icon" class="main-icon">☀️</div>
             <div class="temp" id="main-temp">--°C</div>
             <div class="desc" id="weather-desc">Initialisation...</div>
-            <div style="font-size: 11px; font-weight: 600; margin-bottom: -2px; margin-top: 4px; color: #041e49;">📈 Évolution à venir :</div>
-                <div class="hourly-timeline-wrapper">
-                    <div class="hourly-timeline" id="hourly-container"></div>
-                </div>
+            <div class="hourly-timeline-wrapper">
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: -2px; margin-top: 4px; color: #041e49;">📈 Évolution à venir :</div>    
+                <div class="hourly-timeline" id="hourly-container"></div>
+            </div>
             <div id="weather-details" class="details-pane">
                 <!-- Section Frise Horaire d'Origine -->
 
@@ -117,14 +117,13 @@
                 <div class="detail-row" style="margin-top: 4px;"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
                 <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
                 <div class="detail-row"><span>☀️ Ressenti thermique :</span> <span id="det-apparent">-- °C</span></div>
-                <div id="expert-alert" class="expert-alert-box" onclick="event.stopPropagation();">Analyse de l'index croisé...</div>
- 
-
-            <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir les détails et indices croisés</div>
+                <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir les détails et indices croisés</div>
         </div>
+        <div id="expert-alert" class="expert-alert-box" onclick="event.stopPropagation();">Analyse de l'index croisé...</div>
+ 
         <div class="grid">
             <div class="card">
-                <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">💨</span><h2>Vent</h2></div>
+                <div class="card-header" style="margin-bottom:10; border:none; padding:0;"><span class="card-icon">💨</span><h2>Vent</h2></div>
                 <div class="grid-value" id="sub-wind">-- km/h</div>
                 <div style="font-size: 10px; color: var(--text-sec); margin-top: 4px;">Vitesse instantanée</div>
             </div>
