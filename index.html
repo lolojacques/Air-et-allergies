@@ -268,7 +268,7 @@
 
             // 1. Flux Open-Meteo
             // URL complète à utiliser pour Open-Meteo
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,weather_code&daily=temperature_2m_max,uv_index&hourly=temperature_2m,weather_code&timezone=Europe%2FParis`)
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m,weather_code&daily=temperature_2m_max,uv_index_max&timezone=Europe%2FParis`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
@@ -343,15 +343,15 @@
                     }
                 }).catch(() => {});
             // Prévisions jours J+1 à J+3 
-            if (weatherData.daily) { 
+            if (data.daily) { 
                 const container = document.getElementById('forecast-container'); 
                 if (container) { // Sécurité pour éviter les erreurs si l'élément n'est pas encore rendu
                     container.innerHTML = ""; 
                     for (let i = 1; i <= 3; i++) { 
-                        const max = Math.round(weatherData.daily.temperature_2m_max[i]); 
+                        const max = Math.round(data.daily.temperature_2m_max[i]); 
                         
                         // Note : 'getWeatherDetails' correspond à ton helper 'tracerCodeMeteo' dans ton architecture
-                        const details = tracerCodeMeteo(weatherData.daily.weather_code[i]); 
+                        const details = tracerCodeMeteo(data.daily.weather_code[i]); 
                         
                         container.innerHTML += `
                             <div class="forecast-day">
