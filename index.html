@@ -97,7 +97,11 @@
             <div class="desc" id="weather-desc">Initialisation...</div>
             
             <div id="weather-details" class="details-pane">
-                <div class="hourly-timeline" id="hourly-container" onclick="event.stopPropagation();"></div>
+                <!-- Section Frise Horaire d'Origine -->
+                <div style="font-size: 11px; font-weight: 600; margin-bottom: -2px; margin-top: 4px; color: #041e49;">📈 Évolution à venir :</div>
+                <div class="hourly-timeline-wrapper">
+                    <div class="hourly-timeline" id="hourly-container"></div>
+                </div>
                 <div class="detail-row" style="margin-top: 8px; font-size: 11px; color:#041e49;" onclick="event.stopPropagation();">
                     <span>🌧️ Pluie (1h) : <b id="det-rain">0 mm</b></span>
                     <span>💧 Humidité : <b id="det-humidity">-- %</b></span>
@@ -108,21 +112,24 @@
                     <div>☀️ Indice UV : <span id="uv-val">--</span></div>
                     <div>💨 Ressenti Bioclimatique : <span id="eco-index-val">Calcul en cours...</span></div>
                     <div>⚠️ Vigilance Nationale : <span id="vigilance-val">Verte</span></div>
-                </div>
-                <!-- Prévisions -->
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-icon">📅</span>
-                        <h2>Prévisions Météo</h2>
-                    </div>
-                    <div id="forecast-container"></div>
-                </div>
+                </div>                
+                <!-- Section Lignes de Détails -->
+                <div class="detail-row" style="margin-top: 4px;"><span>🌧️ Précipitations (1h) :</span> <span id="det-rain">0 mm</span></div>
+                <div class="detail-row"><span>💧 Humidité relative :</span> <span id="det-humidity">-- %</span></div>
+                <div class="detail-row"><span>☀️ Ressenti thermique :</span> <span id="det-apparent">-- °C</span></div>
+            </div>
                 <div id="expert-alert" class="expert-alert-box" onclick="event.stopPropagation();">Analyse de l'index croisé...</div>
             </div>
 
             <div class="click-hint" id="weather-hint" style="font-size: 10px; opacity: 0.7; margin-top: 8px;">👇 Touchez pour voir les détails et indices croisés</div>
         </div>
-
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📅</span>
+                <h2>Prévisions Météo</h2>
+            </div>
+            <div id="forecast-container"></div>
+        </div>
         <div class="card clickable-card" onclick="toggleRadar()">
             <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div style="display: flex; align-items: center; gap: 4px;">
@@ -277,13 +284,27 @@
                     metaoCourante.uv = data.current.uv_index;
 
                     const container = document.getElementById('hourly-container');
-                    container.innerHTML = "";
-                    for(let i=0; i<10; i++) {
-                        container.innerHTML += `
-                            <div class="hourly-item">
-                                <div class="hourly-time">+${i+1}h</div>
-                                <div class="hourly-temp">${Math.round(data.hourly.temperature_2m[i])}°</div>
-                            </div>`;
+                    if (data.hourly && data.hourly.time) { 
+                        const hourlyContainer = document.getElementById('hourly-container');
+                        hourlyContainer.innerHTML = "";
+                        const maintenant = new Date();
+                        let itemsAffiches = 0;
+                
+                        for (let i = 0; i < data.hourly.time.length; i++) {
+                            const heureData = new Date(data.hourly.time[i]);
+                            if (heureData >= maintenant || (heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate())) {
+                                const heureTexte = heureData.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                const tempHorraire = Math.round(data.hourly.temperature_2m[i]);
+                
+                                hourlyContainer.innerHTML += `
+                                    <div class="hourly-item">
+                                        <div class="hourly-time">${heureTexte}</div>
+                                        <div class="hourly-temp">${tempHorraire}°</div>
+                                    </div>`;
+                                itemsAffiches++;
+                                if (itemsAffiches >= 8) break;
+                            }
+                        }
                     }
                     document.getElementById('weather-desc').innerText = tracerCodeMeteo(data.current.weather_code);
                     CalculerRessentiBioclimatique();
@@ -446,7 +467,7 @@
             const pane = document.getElementById('weather-details');
             const hint = document.getElementById('weather-hint');
             pane.classList.toggle('open');
-            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour refermer les indices" : "👇 Touchez pour voir les détails et indices croisés";
+            hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour refermer" : "👇 Touchez pour voir les détails et indices croisés";
         }
 
         function toggleAirDetails() {
