@@ -646,9 +646,8 @@
                                                             opacity: 0.75,
                                                             zIndex: 1000,
                                                             crossOrigin: true // Protection contre le blocage ORB
-                                                        });
-                                                        
-                            radarMF.addTo(testMaps.ign);
+                                                        });  
+        
                             // Ajout de la couche Satellite/Nuages Météo-France
                             let satelliteMF = L.tileLayer('https://data.geopf.fr/wms-r', {
                                 layers: 'CLOUD_COVER', // Ou la couche spécifique selon le catalogue (ex: CLOUD_COVER)
@@ -658,7 +657,7 @@
                                 zIndex: 900,
                                 crossOrigin: true
                             });
-                            satelliteMF.addTo(testMaps.ign);
+
                         } else { testMaps.ign.setView([city.lat, city.lon], 6); testMaps.ign.invalidateSize(); }
 
                         if (!testMaps.rv) {
