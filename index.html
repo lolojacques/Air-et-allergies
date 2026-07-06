@@ -167,14 +167,17 @@
                 </div>
                 
                 <div class="card clickable-card" onclick="toggleAirDetails()" id="air-card" style="border-left: 3px solid var(--primary);">
-                    <div class="card-header" style="margin-bottom:0; border:none; padding:0;"><span class="card-icon">🫁</span><h2>Qualité Air</h2></div>
-                    <div id="air-badge" class="badge level-0" style="margin-top: 4px; align-self: flex-start;">--</div>
-                    <div class="click-hint hint-sec" id="air-hint" style="margin-top: 6px; text-align: left;">👇 Voir les polluants</div>
+                    <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
+                        <span class="card-icon">🫁</span><h2>Qualité Air</h2>
+                    </div>
+                    <div id="air-badge" class="badge level-0" style="margin-top: 8px; align-self: flex-start;">--</div>
+                    <div class="click-hint hint-sec" id="air-hint" style="margin-top: 12px; text-align: left;">👇 Voir les polluants</div>
                     
+                    <!-- L'élément de détails doit être en display: none par défaut via le CSS -->
                     <div class="details-pane" id="air-details-box" onclick="event.stopPropagation();">
-                        <div class="detail-row" style="font-size:11px; margin-top:4px;"><span>O₃ :</span><b id="pol-o3">--</b></div>
-                        <div class="detail-row" style="font-size:11px;"><span>PM10 :</span><b id="pol-pm10">--</b></div>
-                        <div class="detail-row" style="font-size:11px;"><span>PM2.5 :</span><b id="pol-pm25">--</b></div>
+                        <div class="detail-row" style="margin-top:8px;"><span>O₃ :</span><strong id="pol-o3">--</strong></div>
+                        <div class="detail-row"><span>PM10 :</span><strong id="pol-pm10">--</strong></div>
+                        <div class="detail-row"><span>PM2.5 :</span><strong id="pol-pm25">--</strong></div>
                     </div>
                 </div>
             </div>
@@ -402,7 +405,11 @@
                     }).catch(() => {});
                 
                 // CORRECTIF 3 : Réintégration complète de  Éco-Santé National
-                fetch(`https://api.ecosante.beta.gouv.fr/v1/indicators/commune/${geo.codeInsee}?format=json`)
+                // Nouvelle URL officielle (remplace le domaine écosanté obsolète)
+                fetch(`https://api.atmo-france.org/v1/indicators/commune/${insee}/pollens`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                })
                     .then(res => res.json())
                     .then(ecosanteData => {
                         if (ecosanteData && ecosanteData.data) {
@@ -502,17 +509,29 @@
 
             // CORRECTIF 1 : Réactivation complète et robuste de l'accordéon météo principale
             function toggleWeatherDetails() {
-                const pane = document.getElementById('weather-details');
+                const details = document.getElementById('weather-details');
                 const hint = document.getElementById('weather-hint');
-                pane.classList.toggle('open');
-                hint.innerText = pane.classList.contains('open') ? "👆 Touchez pour refermer" : "👇 Touchez pour voir les détails et indices croisés";
+                
+                if (details.classList.contains('open')) {
+                    details.classList.remove('open');
+                    hint.innerText = "👇 Touchez pour voir les détails et indices croisés";
+                } else {
+                    details.classList.add('open');
+                    hint.innerText = "👆 Touchez pour masquer les détails";
+                }
             }
 
             function toggleAirDetails() {
-                const pane = document.getElementById('air-details-box');
+                const details = document.getElementById('air-details-box');
                 const hint = document.getElementById('air-hint');
-                pane.classList.toggle('open');
-                hint.innerText = pane.classList.contains('open') ? "👆 Masquer" : "👇 Voir les polluants";
+                
+                if (details.classList.contains('open')) {
+                    details.classList.remove('open');
+                    hint.innerText = "👇 Voir les polluants";
+                } else {
+                    details.classList.add('open');
+                    hint.innerText = "👆 Masquer les polluants";
+                }
             }
 
             function togglePollenDetails() {
