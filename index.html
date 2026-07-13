@@ -324,27 +324,39 @@
 
             function executerRequetesBackground(vKey) {
                 const geo = CITIES[vKey] || { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" };
-
-                // 1. Flux Open-Meteo
-                // URL complète à utiliser pour Open-Meteo
-                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature&hourly=temperature_2m,weather_code&daily=temperature_2m_max,uv_index_max&timezone=Europe%2FParis`)
+                
+                // CORRECTION : S'assurer que la clé globale de la ville courante est à jour pour l'arbitrage
+                currentCityKey = vKey; 
+            
+                // 1. Flux Open-Meteo (Météo générale + UV)
+                // NOTE : Ajout explicite de "uv_index" dans le paramètre current pour éviter les valeurs undefined
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,uv_index&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&timezone=Europe%2FParis`)
                     .then(res => res.json())
                     .then(data => {
+                        if (!data || !data.current) return;
+            
+                        // MAJ Écran Principal
                         document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
                         document.getElementById('sub-wind').innerText = `${Math.round(data.current.wind_speed_10m)} km/h`;
                         document.getElementById('det-humidity').innerText = `${data.current.relative_humidity_2m} %`;
                         document.getElementById('det-apparent').innerText = `${Math.round(data.current.apparent_temperature)} °C`;
                         document.getElementById('det-rain').innerText = `${data.current.rain} mm`;
-                        document.getElementById('uv-val').innerText = Math.round(data.current.uv_index);
                         
-                        metaoCourante.temp = data.current.temperature_2m;
-                        metaoCourante.vent = data.current.wind_speed_10m;
-                        metaoCourante.humidite = data.current.relative_humidity_2m;
-                        metaoCourante.uv = data.current.uv_index;
-
-                        const container = document.getElementById('hourly-container');
-                        if (data.hourly && data.hourly.time) { 
-                            const hourlyContainer = document.getElementById('hourly-container');
+                        // Sécurité si l'index UV vaut 0 ou est absent
+                        const uvValue = data.current.uv_index !== undefined ? Math.round(data.current.uv_index) : 0;
+                        document.getElementById('uv-val').innerText = uvValue;
+                        
+                        // Synchronisation de la structure globale de l'application
+                        if (typeof metaoCourante !== 'undefined') {
+                            metaoCourante.temp = data.current.temperature_2m;
+                            metaoCourante.vent = data.current.wind_speed_10m;
+                            metaoCourante.humidite = data.current.relative_humidity_2m;
+                            metaoCourante.uv = uvValue;
+                        }
+            
+                        // Génération de la frise horaire (8 prochains impacts)
+                        const hourlyContainer = document.getElementById('hourly-container');
+                        if (hourlyContainer && data.hourly && data.hourly.time) { 
                             hourlyContainer.innerHTML = "";
                             const maintenant = new Date();
                             let itemsAffiches = 0;
@@ -365,78 +377,93 @@
                                 }
                             }
                         }
-                        document.getElementById('weather-desc').innerText = tracerCodeMeteo(data.current.weather_code);
-                        CalculerRessentiBioclimatique();
-                        // Prévisions jours J+1 à J+NBJOURS 
-                        if (data.daily) { 
-                            const container = document.getElementById('forecast-container'); 
-                            const nbjours = 5;
-                            if (container) { // Sécurité pour éviter les erreurs si l'élément n'est pas encore rendu
-                                container.innerHTML = ""; 
-                                for (let i = 1; i <= nbjours; i++) { 
-                                    const max = Math.round(data.daily.temperature_2m_max[i]); 
-                                    const min = Math.round(data.daily.temperature_2m_min[i]); 
-                                // Note : 'getWeatherDetails' correspond à ton helper 'tracerCodeMeteo' dans ton architecture
-                                    const details = tracerCodeMeteo(data.daily.weather_code[i]); 
-                                    
-                                    container.innerHTML += `
-                                        <div class="forecast-day">
-                                            <span>J+${i}</span>
-                                            <span>${details.icon || '☀️'}</span>
-                                            <span style="flex-grow:1;font-size:12px;color:var(--text-sec);">${details.desc || details}</span>
-                                            <span>${max}°</span>
-                                            <span>${min}°</span>
-                                        </div>`; 
-                                } 
-                            }
+            
+                        // Description textuelle du temps présent
+                        if (typeof tracerCodeMeteo === 'function') {
+                            const descMeteo = tracerCodeMeteo(data.current.weather_code);
+                            document.getElementById('weather-desc').innerText = typeof descMeteo === 'object' ? descMeteo.desc : descMeteo;
                         }
-                    }).catch(() => {});
-
-                // 2. Flux Open Data Nantes Metropole
+                        
+                        if (typeof CalculerRessentiBioclimatique === 'function') {
+                            CalculerRessentiBioclimatique();
+                        }
+            
+                        // Prévisions jours J+1 à J+5 (Correction des variables min/max manquantes dans l'URL d'origine)
+                        const forecastContainer = document.getElementById('forecast-container'); 
+                        if (forecastContainer && data.daily && data.daily.temperature_2m_max) { 
+                            forecastContainer.innerHTML = ""; 
+                            const nbjours = 5;
+                            for (let i = 1; i <= nbjours; i++) { 
+                                if (data.daily.temperature_2m_max[i] === undefined) break;
+                                
+                                const max = Math.round(data.daily.temperature_2m_max[i]); 
+                                const min = Math.round(data.daily.temperature_2m_min[i]); 
+                                const details = typeof tracerCodeMeteo === 'function' ? tracerCodeMeteo(data.daily.weather_code[i]) : '☀️'; 
+                                
+                                forecastContainer.innerHTML += `
+                                    <div class="forecast-day">
+                                        <span>J+${i}</span>
+                                        <span>${details.icon || '☀️'}</span>
+                                        <span style="flex-grow:1;font-size:12px;color:var(--text-sec);">${details.desc || details}</span>
+                                        <span>${max}°</span>
+                                        <span>${min}°</span>
+                                    </div>`; 
+                            } 
+                        }
+                    }).catch(err => console.error("Erreur Open-Meteo:", err));
+            
+                // 2. Flux Open Data Nantes Métropole (Uniquement actif si Nantes est sélectionnée)
                 if (vKey === "nantes") {
                     fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=100`)
                         .then(res => res.json())
                         .then(data => {
                             if (data && data.results) {
-                                document.getElementById('debug-nantes').innerText = JSON.stringify(data.results, null, 2);
+                                const debugEl = document.getElementById('debug-nantes');
+                                if (debugEl) debugEl.innerText = JSON.stringify(data.results, null, 2);
+                                
                                 data.results.forEach(rec => {
                                     const taxon = (rec.group || rec.name || rec.pollen || "").toLowerCase();
                                     const state = parseInt(rec.state, 10);
+                                    // Transmission au scrutin (Conversion : état local 1 = Risque Élevé 4, sinon 0)
                                     if (taxon.includes("bouleau")) fusionnerEtVoter("OpenData Nantes", "bouleau", state === 1 ? 4 : 0);
                                     if (taxon.includes("gramin")) fusionnerEtVoter("OpenData Nantes", "graminees", state === 1 ? 4 : 0);
                                 });
                             }
-                        }).catch(() => {});
+                        }).catch(err => console.warn("Capteur Nantes Métropole indisponible:", err));
                 }
-
-                // 3. Flux Qualité de l'Air (WAQI)
+            
+                // 3. Flux Qualité de l'Air Mondiale (WAQI)
                 fetch(`https://api.waqi.info/feed/${geo.name.toLowerCase()}/?token=demo`)
                     .then(res => res.json())
                     .then(data => {
-                        if (data && data.status === "ok") {
+                        if (data && data.status === "ok" && data.data) {
                             const aqi = data.data.aqi;
                             const badge = document.getElementById('air-badge');
-                            badge.innerText = aqi;
-                            badge.className = `badge level-${aqi > 100 ? 4 : aqi > 75 ? 3 :aqi > 50 ? 2 : 1}`;
+                            if (badge) {
+                                badge.innerText = aqi;
+                                badge.className = `badge level-${aqi > 100 ? 4 : aqi > 75 ? 3 : aqi > 50 ? 2 : 1}`;
+                            }
                             
-                            document.getElementById('pol-o3').innerText = `${data.data.iaqi.o3 ? Math.round(data.data.iaqi.o3.v) : '--'} µg/m³`;
-                            document.getElementById('pol-pm10').innerText = `${data.data.iaqi.pm10 ? Math.round(data.data.iaqi.pm10.v) : '--'} µg/m³`;
-                            document.getElementById('pol-pm25').innerText = `${data.data.iaqi.pm25 ? Math.round(data.data.iaqi.pm25.v) : '--'} µg/m³`;
+                            // Remplissage sécurisé des sous-polluants (si fournis par la station locale)
+                            if (data.data.iaqi) {
+                                if (document.getElementById('pol-o3')) document.getElementById('pol-o3').innerText = `${data.data.iaqi.o3 ? Math.round(data.data.iaqi.o3.v) : '--'} µg/m³`;
+                                if (document.getElementById('pol-pm10')) document.getElementById('pol-pm10').innerText = `${data.data.iaqi.pm10 ? Math.round(data.data.iaqi.pm10.v) : '--'} µg/m³`;
+                                if (document.getElementById('pol-pm25')) document.getElementById('pol-pm25').innerText = `${data.data.iaqi.pm25 ? Math.round(data.data.iaqi.pm25.v) : '--'} µg/m³`;
+                            }
                         }
-                    }).catch(() => {});
+                    }).catch(err => console.error("Erreur WAQI:", err));
                 
-                // CORRECTIF 3 : Réintégration complète de  Éco-Santé National
-                // Nouvelle URL officielle (remplace le domaine écosanté obsolète)
-                const city = CITIES[document.getElementById('city-select').value];
-                const insee=city.codeInsee;
-                fetch(`https://api.atmo-france.org/v1/indicators/commune/${insee}/pollens`, {
+                // 4. Flux Éco-Santé National (Atmo France)
+                fetch(`https://api.atmo-france.org/v1/indicators/commune/${geo.codeInsee}/pollens`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 })
                     .then(res => res.json())
                     .then(ecosanteData => {
                         if (ecosanteData && ecosanteData.data) {
-                            document.getElementById('debug-ecosante').innerText = JSON.stringify(ecosanteData.data, null, 2);
+                            const debugEco = document.getElementById('debug-ecosante');
+                            if (debugEco) debugEco.innerText = JSON.stringify(ecosanteData.data, null, 2);
+                            
                             if (ecosanteData.data.pollen && ecosanteData.data.pollen.species) {
                                 ecosanteData.data.pollen.species.forEach(sp => {
                                     const label = sp.label.toLowerCase();
@@ -446,23 +473,37 @@
                             }
                         }
                     }).catch(err => {
-                        document.getElementById('debug-ecosante').innerText = "Indicateur National indisponible en direct. Maintien du vote saisonnier.";
+                        console.warn("API Éco-Santé injoignable.");
+                        const debugEco = document.getElementById('debug-ecosante');
+                        if (debugEco) debugEco.innerText = "Indicateur National indisponible en direct. Maintien du vote saisonnier.";
                     });
             }
             
             function fusionnerEtVoter(source, typeDonnee, valeur) {
                 if (valeur === undefined || valeur === null || isNaN(valeur)) return;
+                if (!scrutinPollens || !scrutinPollens[typeDonnee]) return;
+            
                 let votesActuels = scrutinPollens[typeDonnee].votes;
                 const indexSource = votesActuels.findIndex(v => v.source === source);
-                if (indexSource > -1) votesActuels[indexSource].valeur = valeur;
-                else votesActuels.push({ source: source, valeur: valeur });
+                
+                if (indexSource > -1) {
+                    votesActuels[indexSource].valeur = valeur;
+                } else {
+                    votesActuels.push({ source: source, valeur: valeur });
+                }
                 arbitrerDonnees();
             }
-
+            
             function arbitrerDonnees() {
+                if (typeof scrutinPollens === 'undefined') return;
+            
                 Object.keys(scrutinPollens).forEach(taxon => {
                     const listeVotes = scrutinPollens[taxon].votes;
+                    if (!listeVotes || listeVotes.length === 0) return;
+            
                     const voteTerrain = listeVotes.find(v => v.source === "OpenData Nantes");
+                    
+                    // CORRECTION : Utilisation de la variable globale synchronisée au début de la fonction
                     if (voteTerrain && currentCityKey === "nantes") {
                         scrutinPollens[taxon].retenu = voteTerrain.valeur;
                     } else {
@@ -470,7 +511,10 @@
                         scrutinPollens[taxon].retenu = Math.round(somme / listeVotes.length);
                     }
                 });
-                appliquerArbitrageGraphique();
+                
+                if (typeof appliquerArbitrageGraphique === 'function') {
+                    appliquerArbitrageGraphique();
+                }
             }
 
             function appliquerArbitrageGraphique() {
@@ -479,20 +523,57 @@
                 document.getElementById('bar-bouleau').className = `risk-bar level-${vBouleau}`;
                 document.getElementById('txt-bouleau').innerText = traduireNiveauPollen(vBouleau);
                 document.getElementById('txt-bouleau').className = `badge level-${vBouleau}`;
-
+            
                 const vGraminees = scrutinPollens.graminees.retenu;
                 document.getElementById('bar-graminees').style.width = `${(vGraminees / 5) * 100}%`;
                 document.getElementById('bar-graminees').className = `risk-bar level-${vGraminees}`;
                 document.getElementById('txt-graminees').innerText = traduireNiveauPollen(vGraminees);
                 document.getElementById('txt-graminees').className = `badge level-${vGraminees}`;
-
+            
+                // ---- AJOUT : LISTE DYNAMIQUE DES POLLENS ACTIFS ----
+                const listeActifsContainer = document.getElementById('pollens-actifs-list');
+                if (listeActifsContainer) {
+                    let htmlActifs = "";
+                    let aucunPollenActif = true;
+            
+                    Object.keys(scrutinPollens).forEach(taxon => {
+                        const niveau = scrutinPollens[taxon].retenu;
+                        
+                        // On considère le pollen comme actif dès que le niveau est supérieur à 0 (risque 1 à 5)
+                        if (niveau > 0) {
+                            aucunPollenActif = false;
+                            
+                            // Formatage propre du nom (ex: "graminees" -> "Graminées", "bouleau" -> "Bouleau")
+                            let nomAffiche = taxon.charAt(0).toUpperCase() + taxon.slice(1);
+                            if (taxon === "graminees") nomAffiche = "Graminées (toutes espèces)";
+            
+                            htmlActifs += `
+                                <div class="active-pollen-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px;">
+                                    <span style="font-weight: 500;">🌱 ${nomAffiche}</span>
+                                    <span class="badge level-${niveau}" style="padding: 2px 8px; border-radius: 4px; font-size: 11px;">
+                                        ${traduireNiveauPollen(niveau)}
+                                    </span>
+                                </div>`;
+                        }
+                    });
+            
+                    if (aucunPollenActif) {
+                        htmlActifs = `<div style="color: var(--text-sec); font-size: 12px; font-style: italic;">Aucun pollen ou graminée actif actuellement.</div>`;
+                    }
+            
+                    listeActifsContainer.innerHTML = htmlActifs;
+                }
+            
+                // Zone de debug préservée
                 let debugTxt = "";
                 Object.keys(scrutinPollens).forEach(t => {
                     debugTxt += `${t.toUpperCase()} -> Elu : Index ${scrutinPollens[t].retenu} [`;
                     debugTxt += scrutinPollens[t].votes.map(v => `${v.source}:${v.valeur}`).join(", ");
                     debugTxt += "]\n";
                 });
-                document.getElementById('debug-arbitrage').innerText = debugTxt;
+                const debugEl = document.getElementById('debug-arbitrage');
+                if (debugEl) debugEl.innerText = debugTxt;
+            
                 analyserFacteursBioclimatiques();
             }
 
