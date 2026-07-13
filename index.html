@@ -186,12 +186,17 @@
                 </div>
             </div>
             
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">📅</span>
-                    <h2>Prévisions Météo</h2>
+            <div class="card clickable-card" onclick="toggleForecast()">
+                <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span class="card-icon">📅</span>
+                        <h2>Prévisions Météo</h2>
+                    </div>
                 </div>
-                <div id="forecast-container"></div>
+                <div class="click-hint hint-sec" id="forecast-hint" style="font-size:9px; margin-bottom:4px;">👇 Touchez pour déplier les prévisions à long terme</div>
+                <div id="forecast-container" class="hourly-container" style="display: flex; overflow-x: auto; gap: 10px;">
+                    <!-- Les jours s'affichent ici -->
+                </div>
             </div>
             <div class="card clickable-card" onclick="toggleRadar()">
                 <div class="card-header" style="margin-bottom: 4px; border: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -211,7 +216,7 @@
                 </div>
             </div>
 
-            <div class="card clickable-card" onclick="togglePollenDetails()">
+            <div class="card clickable-card" onclick="PollenDetails()">
                 <div class="card-header"><span class="card-icon">🌿</span><h2>Synthèse des Risques Pollens</h2></div>
                 <div class="data-row">
                     <div style="font-weight:500;">🌳 Bouleau</div>
@@ -240,7 +245,7 @@
             </div>
             <div class="source-footer" id="pollen-source">Source : Estimations Saisonnières Historiques</div>
 
-            <div class="card clickable-card" onclick="toggleBancTest()">
+            <div class="card clickable-card" onclick="BancTest()">
                 <div class="card-header" style="margin-bottom:0; border:none; padding:0;">
                     <span class="card-icon">🧪</span>
                     <h2>Test Cartes</h2>
@@ -330,7 +335,7 @@
             
                 // 1. Flux Open-Meteo (Météo générale + UV)
                 // NOTE : Ajout explicite de "uv_index" dans le paramètre current pour éviter les valeurs undefined
-                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,uv_index&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&timezone=Europe%2FParis`)
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,uv_index&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&timezone=Europe%2FParis&forecast_days=10`)
                     .then(res => res.json())
                     .then(data => {
                         if (!data || !data.current) return;
@@ -421,11 +426,11 @@
                                 
                                 // Injection sous forme de carte verticale (copie du modèle horaire)
                                 forecastContainer.innerHTML += `
-                                    <div class="forecast-item" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-width: 65px; padding: 8px; text-align: center;">
-                                        <div class="forecast-time" style="font-size: 13px; font-weight: 500; margin-bottom: 4px;">${nomJourCapitalise}</div>
-                                        <div class="forecast-icon" style="font-size: 20px; margin-bottom: 6px;" title="${description}">${icone}</div>
-                                        <div class="forecast-temp" style="font-size: 14px; font-weight: 600;">${max}°</div>
-                                        <div class="forecast-temp-min" style="font-size: 11px; color: var(--text-sec);">${min}°</div>
+                                    <div class="hourly-item">
+                                        <div class="hourly-time">${nomJourCapitalise}</div>
+                                        <div style="font-size: 18px; margin: 4px 0;">${icone}</div>
+                                        <div class="hourly-temp">${max}°</div>
+                                        <div style="font-size: 11px; color: var(--text-sec); font-weight: normal;">${min}°</div>
                                     </div>`;
                             } 
                         }
@@ -656,7 +661,21 @@
                     hint.innerText = "👆 Masquer les polluants";
                 }
             }
-
+            function toggleForecast() {
+                const container = document.getElementById('forecast-container');
+                const hint = document.getElementById('forecast-hint');
+                
+                // Si le conteneur est masqué ou replié
+                if (container.style.display === 'none' || container.classList.contains('collapsed')) {
+                    container.style.display = 'flex'; // On l'affiche en mode flex pour le slider horizontal
+                    container.classList.remove('collapsed');
+                    hint.innerText = '👆 Touchez pour replier le module';
+                } else {
+                    container.style.display = 'none'; // On le cache
+                    container.classList.add('collapsed');
+                    hint.innerText = '👇 Touchez pour déplier les prévisions à long terme';
+                }
+            }
             function togglePollenDetails() {
                 const pane = document.getElementById('pollen-details-box');
                 const hint = document.getElementById('pollen-hint');
