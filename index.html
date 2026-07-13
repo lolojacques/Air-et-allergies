@@ -360,7 +360,7 @@
                             hourlyContainer.innerHTML = "";
                             const maintenant = new Date();
                             let itemsAffiches = 0;
-                    
+                            const nbheuresprevision = 24;
                             for (let i = 0; i < data.hourly.time.length; i++) {
                                 const heureData = new Date(data.hourly.time[i]);
                                 if (heureData >= maintenant || (heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate())) {
@@ -373,7 +373,7 @@
                                             <div class="hourly-temp">${tempHorraire}°</div>
                                         </div>`;
                                     itemsAffiches++;
-                                    if (itemsAffiches >= 8) break;
+                                    if (itemsAffiches >= nbheuresprevision) break;
                                 }
                             }
                         }
@@ -388,25 +388,45 @@
                             CalculerRessentiBioclimatique();
                         }
             
-                        // Prévisions jours J+1 à J+5 (Correction des variables min/max manquantes dans l'URL d'origine)
+                        // Prévisions jours J+1 à J+5
                         const forecastContainer = document.getElementById('forecast-container'); 
                         if (forecastContainer && data.daily && data.daily.temperature_2m_max) { 
                             forecastContainer.innerHTML = ""; 
                             const nbjours = 5;
+                        
                             for (let i = 1; i <= nbjours; i++) { 
                                 if (data.daily.temperature_2m_max[i] === undefined) break;
                                 
                                 const max = Math.round(data.daily.temperature_2m_max[i]); 
                                 const min = Math.round(data.daily.temperature_2m_min[i]); 
-                                const details = typeof tracerCodeMeteo === 'function' ? tracerCodeMeteo(data.daily.weather_code[i]) : '☀️'; 
                                 
+                                // 1. Récupération du code météo
+                                const rawDetails = typeof tracerCodeMeteo === 'function' ? tracerCodeMeteo(data.daily.weather_code[i]) : '☀️'; 
+                                
+                                // 2. Sécurisation : On extrait l'icône et le texte, que rawDetails soit un objet ou une chaîne
+                                let icone = '☀️';
+                                let description = '';
+                        
+                                if (typeof rawDetails === 'object' && rawDetails !== null) {
+                                    icone = rawDetails.icon || '☀️';
+                                    description = rawDetails.desc || '';
+                                } else {
+                                    description = rawDetails; // C'était une simple chaîne
+                                }
+                        
+                                // 3. Calcul du nom du jour (ex: "Mar.", "Mer.") au lieu de "J+1"
+                                const dateJ = new Date(data.daily.time[i]);
+                                const nomJour = dateJ.toLocaleDateString('fr-FR', { weekday: 'short' });
+                                const nomJourCapitalise = nomJour.charAt(0).toUpperCase() + nomJour.slice(1);
+                                
+                                // 4. Injection HTML
                                 forecastContainer.innerHTML += `
-                                    <div class="forecast-day">
-                                        <span>J+${i}</span>
-                                        <span>${details.icon || '☀️'}</span>
-                                        <span style="flex-grow:1;font-size:12px;color:var(--text-sec);">${details.desc || details}</span>
-                                        <span>${max}°</span>
-                                        <span>${min}°</span>
+                                    <div class="forecast-day" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="width: 45px; font-weight: 500;">${nomJourCapitalise}</span>
+                                        <span style="margin-right: 8px;">${icone}</span>
+                                        <span style="flex-grow: 1; font-size: 12px; color: var(--text-sec); text-align: left;">${description}</span>
+                                        <span style="font-weight: 600; margin-right: 8px;">${max}°</span>
+                                        <span style="color: var(--text-sec);">${min}°</span>
                                     </div>`; 
                             } 
                         }
