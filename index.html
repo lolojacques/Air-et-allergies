@@ -212,9 +212,12 @@
                 </div>
                 <!-- CONTROLES DU RADAR (Ajoutés ici) -->
                 <div id="radar-timeline-controls" style="display: none; align-items: center; justify-content: space-between; margin: 8px 0; background: rgba(0,0,0,0.05); padding: 6px; border-radius: 6px;" onclick="event.stopPropagation();">
-                    <button onclick="changerFrameRadar(-1)" style="padding: 2px 8px;">◀</button>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button onclick="changerFrameRadar(-1)" style="padding: 2px 8px; cursor: pointer;">◀</button>
+                        <button id="play-stop-btn" onclick="togglePlayAnimation()" style="padding: 4px 12px; font-size: 11px; font-weight: bold; background: #041e49; color: white; border: none; border-radius: 12px; cursor: pointer; min-width: 65px;">▶ Play</button>
+                        <button onclick="changerFrameRadar(1)" style="padding: 2px 8px; cursor: pointer;">▶</button>
+                    </div>
                     <span id="radar-time-label" style="font-size: 12px; font-weight: 600; color: var(--text-main);">Chargement...</span>
-                    <button onclick="changerFrameRadar(1)" style="padding: 2px 8px;">▶</button>
                 </div>
                 <div class="click-hint hint-sec" id="radar-hint" style="font-size:9px; margin-bottom:4px;">👇 Touchez pour déplier le module cartographique</div>
                 <div id="radar-container">
@@ -299,10 +302,10 @@
             let currentCityKey = "nantes";
             let map = null;
             let activeLayers = {};
-            let mapMode = "ign"; 
+            let mapMode = "rv"; 
             let testMaps = { ign: null, rv: null, nasa: null };
             let scrutinPollens = { bouleau: { votes: [], retenu: 0 }, graminees: { votes: [], retenu: 0 } };
-            let metaoCourante = { temp: 15, vent: 10, humidite: 50, uv: 2, vigilance: "Verte" };
+            let metaoCourante = { temp: 15, vent: 10, humidite: 50, uv: 2, vigilance: "Verte",alerteOfficielleTexte: null};
 
             function logDebug(message) {
                 const box = document.getElementById('debug-console-box');
@@ -335,7 +338,6 @@
 
             function executerRequetesBackground(vKey) {
                 const geo = CITIES[vKey] || { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" };
-                
                 // CORRECTION : S'assurer que la clé globale de la ville courante est à jour pour l'arbitrage
                 currentCityKey = vKey; 
             
@@ -486,7 +488,22 @@
                             }
                         }).catch(err => console.warn("Capteur Nantes Métropole indisponible:", err));
                 }
-            
+                // AJOUT à l'intérieur de executerRequetesBackground :
+                fetch(`https://alerts.open-meteo.com/v1/alerts?latitude=${geo.lat}&longitude=${geo.lon}&timezone=Europe%2FParis`)
+                    .then(res => res.json())
+                    .then(alertData => {
+                        // Si une alerte officielle météo est active sur la zone
+                        if (alertData && alertData.alerts && alertData.alerts.length > 0) {
+                            // On récupère le titre et la description textuelle officielle
+                            const alertePrincipale = alertData.alerts[0];
+                            metaoCourante.alerteOfficielleTexte = `⚠️ <b>${alertePrincipale.event}</b> : ${alertePrincipale.description}`;
+                        } else {
+                            metaoCourante.alerteOfficielleTexte = null; // Aucune alerte officielle
+                        }
+                        // On force la mise à jour de l'affichage de la box experte
+                        analyserFacteursBioclimatiques();
+                    })
+                    .catch(err => console.warn("Impossible de joindre le flux d'alertes textuelles :", err));
                 // 3. Flux Qualité de l'Air Mondiale (WAQI)
                 fetch(`https://api.waqi.info/feed/${geo.name.toLowerCase()}/?token=demo`)
                     .then(res => res.json())
@@ -642,24 +659,28 @@
 
             function analyserFacteursBioclimatiques() {
                 const alertBox = document.getElementById('expert-alert');
+                if (metaoCourante.alerteOfficielleTexte) {
+                    alertBox.className = "expert-alert-box danger";
+                    alertBox.innerHTML = metaoCourante.alerteOfficielleTexte;
+                }
                 const gramineesValue = scrutinPollens.graminees.retenu;
                 const bouleauValue = scrutinPollens.bouleau.retenu;
                 const vent = metaoCourante.vent; const uv = metaoCourante.uv;
                 const descMeteo = document.getElementById('weather-desc').innerText.toLowerCase();
 
                 if ((descMeteo.includes("orage") || metaoCourante.vigilance.includes("Orage")) && gramineesValue >= 3) {
-                    alertBox.className = "expert-alert-box danger";
-                    alertBox.innerHTML = "⚡ <b>Alerte d'asthme de tempête</b> : L'orage éclate les pollens de Graminées au sol en débris ultra-respirables. Confinement impératif.";
+                    alertBox.className += "expert-alert-box danger";
+                    alertBox.innerHTML += "⚡ <b>Alerte d'asthme de tempête</b> : L'orage éclate les pollens de Graminées au sol en débris ultra-respirables. Confinement impératif.";
                     return;
                 }
                 if (vent > 25 && (gramineesValue >= 3 || bouleauValue >= 3)) {
-                    alertBox.className = "expert-alert-box danger";
-                    alertBox.innerHTML = "💨 <b>Dispersion maximale</b> : Rafales supérieures à 25 km/h détectées. Transport massif des allergènes. Maintenez les fenêtres closes.";
+                    alertBox.className += "expert-alert-box danger";
+                    alertBox.innerHTML += "💨 <b>Dispersion maximale</b> : Rafales supérieures à 25 km/h détectées. Transport massif des allergènes. Maintenez les fenêtres closes.";
                     return;
                 }
                 if (uv >= 6 && (gramineesValue >= 3 || bouleauValue >= 3)) {
-                    alertBox.className = "expert-alert-box danger";
-                    alertBox.innerHTML = "🕶️ <b>Agressivité oculaire forte</b> : Le fort indice UV agresse la cornée sensibilisée par les pollens. Lunettes filtrantes requises.";
+                    alertBox.className += "expert-alert-box danger";
+                    alertBox.innerHTML += "🕶️ <b>Agressivité oculaire forte</b> : Le fort indice UV agresse la cornée sensibilisée par les pollens. Lunettes filtrantes requises.";
                     return;
                 }
                 alertBox.className = "expert-alert-box";
@@ -753,10 +774,17 @@
                 if (activeLayers.ign && map.hasLayer(activeLayers.ign)) map.removeLayer(activeLayers.ign);
                 if (activeLayers.radar_rv && map.hasLayer(activeLayers.radar_rv)) map.removeLayer(activeLayers.radar_rv);
                 if (activeLayers.nasa && map.hasLayer(activeLayers.nasa)) map.removeLayer(activeLayers.nasa);
-
-                if (mapMode === "ign") { activeLayers.ign.addTo(map); }
-                else if (mapMode === "radar_rv") { activeLayers.ign.addTo(map); activeLayers.radar_rv.addTo(map); }
-                else if (mapMode === "nasa") { activeLayers.nasa.addTo(map); }
+                if (radarTileLayer && map.hasLayer(radarTileLayer)) map.removeLayer(radarTileLayer);
+            
+                // On affiche toujours le fond de carte IGN en dessous de la pluie ou du satellite
+                if (mapMode === "ign" || mapMode === "radar_rv" || mapMode === "nasa") { 
+                    activeLayers.ign.addTo(map); 
+                }
+                
+                // Si une frame de la timeline est prête (Pluie ou Sat), on l'affiche
+                if ((mapMode === "radar_rv" || mapMode === "nasa") && radarTileLayer) {
+                    radarTileLayer.addTo(map);
+                }
                 
                 setTimeout(() => { map.invalidateSize(); }, 60);
             }
@@ -764,16 +792,52 @@
             function setMapMode(mode) {
                 mapMode = mode;
                 document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
-                if (mode === 'radar_rv') {
-                    document.getElementById('layer-btn-rv').classList.add('active');
-                    chargerTimelineRadar(); // Active la timeline et charge les images
+                
+                // Arrêter toute animation en cours lors d'un changement de mode
+                stopperAnimation();
+            
+                if (mode === 'radar_rv' || mode === 'nasa') {
+                    if (mode === 'radar_rv') document.getElementById('layer-btn-rv').classList.add('active');
+                    if (mode === 'nasa') document.getElementById('layer-btn-nasa').classList.add('active');
+                    chargerTimelineRadar(); // Cette fonction va maintenant gérer les deux modes
                 } else {
-                    // Masquer les boutons temporels si on passe sur IGN ou SAT
                     document.getElementById('radar-timeline-controls').style.display = 'none';
-                    if(mode === "ign") document.getElementById('layer-btn-ign').classList.add('active');
-                    if(mode === "nasa") document.getElementById('layer-btn-nasa').classList.add('active');
+                    if (mode === 'ign') document.getElementById('layer-btn-ign').classList.add('active');
                     gererAffichageCalqueUnique();
                 } 
+            }
+            
+            function chargerTimelineRadar() {
+                fetch('https://api.rainviewer.com/public/weather-maps.json')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.host) rainViewerHost = data.host;
+                        radarFrames = [];
+                        
+                        if (mapMode === 'radar_rv') {
+                            // MODE PLUIE : Past + Nowcast
+                            if (data.radar && data.radar.past) {
+                                data.radar.past.forEach(f => radarFrames.push({ timestamp: f.time, path: f.path, type: 'passé' }));
+                            }
+                            if (data.radar && data.radar.nowcast) {
+                                data.radar.nowcast.forEach(f => radarFrames.push({ timestamp: f.time, path: f.path, type: 'prévision' }));
+                            }
+                            currentFrameIndex = (data.radar && data.radar.past) ? data.radar.past.length - 1 : 0;
+                        } else if (mapMode === 'nasa') {
+                            // MODE SATELLITE ANIMÉ : Données infrarouges de RainViewer
+                            if (data.satellite && data.satellite.infrared) {
+                                data.satellite.infrared.forEach(f => radarFrames.push({ timestamp: f.time, path: f.path, type: 'satellite' }));
+                            }
+                            currentFrameIndex = radarFrames.length - 1;
+                        }
+                        
+                        // Mémorisation de l'index "actuel" pour le bouton Stop
+                        presentFrameIndex = currentFrameIndex;
+                        
+                        document.getElementById('radar-timeline-controls').style.display = 'flex';
+                        appliquerFrameRadar();
+                    })
+                    .catch(err => console.error("Erreur chargement timeline:", err));
             }
 
             function toggleRadar() {
@@ -844,7 +908,10 @@
             let radarFrames = []; // Contiendra la liste des objets { time, path, type }
             let currentFrameIndex = 0;
             let radarTileLayer = null; // Ta variable globale de couche radar (ex: Leaflet)
-            
+            // variables pour anim radar
+            let animationInterval = null;
+            let isPlaying = false;
+            let presentFrameIndex = 0; // Gardera en mémoire l'index de l'image actuelle (Stop)
             function chargerTimelineRadar() {
                 fetch('https://api.rainviewer.com/public/weather-maps.json')
                     .then(res => res.json())
