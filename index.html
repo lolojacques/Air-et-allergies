@@ -210,6 +210,12 @@
                         <button id="layer-btn-nasa" class="map-btn" onclick="setMapMode('nasa')">Sat</button>
                     </div>
                 </div>
+                <!-- CONTROLES DU RADAR (Ajoutés ici) -->
+                <div id="radar-timeline-controls" style="display: none; align-items: center; justify-content: space-between; margin: 8px 0; background: rgba(0,0,0,0.05); padding: 6px; border-radius: 6px;" onclick="event.stopPropagation();">
+                    <button onclick="changerFrameRadar(-1)" style="padding: 2px 8px;">◀</button>
+                    <span id="radar-time-label" style="font-size: 12px; font-weight: 600; color: var(--text-main);">Chargement...</span>
+                    <button onclick="changerFrameRadar(1)" style="padding: 2px 8px;">▶</button>
+                </div>
                 <div class="click-hint hint-sec" id="radar-hint" style="font-size:9px; margin-bottom:4px;">👇 Touchez pour déplier le module cartographique</div>
                 <div id="radar-container">
                     <div id="radar-map"></div>
@@ -733,10 +739,15 @@
             function setMapMode(mode) {
                 mapMode = mode;
                 document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
-                if(mode === "ign") document.getElementById('layer-btn-ign').classList.add('active');
-                if(mode === "radar_rv") document.getElementById('layer-btn-rv').classList.add('active');
-                if(mode === "nasa") document.getElementById('layer-btn-nasa').classList.add('active');
-                gererAffichageCalqueUnique();
+                if (mode === 'radar_rv') {
+                    chargerTimelineRadar(); // Active la timeline et charge les images
+                } else {
+                    // Masquer les boutons temporels si on passe sur IGN ou SAT
+                    document.getElementById('radar-timeline-controls').style.display = 'none';
+                    if(mode === "ign") document.getElementById('layer-btn-ign').classList.add('active');
+                    if(mode === "nasa") document.getElementById('layer-btn-nasa').classList.add('active');
+                    gererAffichageCalqueUnique();
+                } 
             }
 
             function toggleRadar() {
@@ -801,6 +812,78 @@
                 } else {
                     hint.innerText = "👇 Ouvrir le comparateur technique individuel des sources";
                 }
+            }
+
+            */ prévisions radar & sat /*
+            let radarFrames = []; // Contiendra la liste des objets { time, path, type }
+            let currentFrameIndex = 0;
+            let radarTileLayer = null; // Ta variable globale de couche radar (ex: Leaflet)
+            
+            function chargerTimelineRadar() {
+                fetch('https://api.rainviewer.com/public/weather-maps.json')
+                    .then(res => res.json())
+                    .then(data => {
+                        radarFrames = [];
+                        
+                        // 1. Ajouter le Passé (généralement les 2 dernières heures, par pas de 10 min)
+                        if (data.past) {
+                            data.past.forEach(f => {
+                                radarFrames.push({ timestamp: f.time, path: f.path, type: 'passé' });
+                            });
+                        }
+                        
+                        // 2. Ajouter les Prévisions / Nowcast (30 min à 1h30 à venir)
+                        if (data.nowcast) {
+                            data.nowcast.forEach(f => {
+                                radarFrames.push({ timestamp: f.time, path: f.path, type: 'prévision' });
+                            });
+                        }
+                        
+                        // Se positionner par défaut sur le moment présent (la fin de la liste "past")
+                        currentFrameIndex = data.past ? data.past.length - 1 : 0;
+                        
+                        // Afficher les contrôles si le mode radar pluie est actif
+                        document.getElementById('radar-timeline-controls').style.display = 'flex';
+                        
+                        appliquerFrameRadar();
+                    })
+                    .catch(err => console.error("Impossible de charger la frise radar RainViewer:", err));
+            }
+            
+            function appliquerFrameRadar() {
+                if (radarFrames.length === 0) return;
+                
+                const frame = radarFrames[currentFrameIndex];
+                
+                // Convertir le timestamp Unix en heure lisible locale
+                const dateFrame = new Date(frame.timestamp * 1000);
+                const heureLabel = dateFrame.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const tagType = frame.type === 'prévision' ? ' <span style="color:#ff4757;">(Prév)</span>' : ' (Radar)';
+                
+                document.getElementById('radar-time-label').innerHTML = `${heureLabel} ${tagType}`;
+            
+                // MI S À JOUR DE LA CARTE (Exemple type avec Leaflet)
+                // Si tu utilises Leaflet, adapte cette portion à ton code de carte actuel :
+                if (typeof map !== 'undefined') { 
+                    // Supprimer l'ancienne couche si elle existe
+                    if (radarTileLayer) map.removeLayer(radarTileLayer);
+                    
+                    // Créer la nouvelle couche de tuiles avec le "path" spécifique de la frame choisie
+                    const urlTuile = `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/1/1_1.png`;
+                    
+                    // Exemple Leaflet :
+                    radarTileLayer = L.tileLayer(urlTuile, { opacity: 0.65 });
+                    radarTileLayer.addTo(map);
+                }
+            }
+            
+            function changerFrameRadar(direction) {
+                currentFrameIndex += direction;
+                // Sécuriser les bordures
+                if (currentFrameIndex < 0) currentFrameIndex = 0;
+                if (currentFrameIndex >= radarFrames.length) currentFrameIndex = radarFrames.length - 1;
+                
+                appliquerFrameRadar();
             }
 
             const CITIES = {
