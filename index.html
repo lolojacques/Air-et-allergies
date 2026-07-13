@@ -416,27 +416,52 @@
                         try {
                             const hourlyContainer = document.getElementById('hourly-container');
                             if (hourlyContainer && data.hourly && data.hourly.temperature_2m) {
-                                hourlyContainer.innerHTML = ""; // On vide l'indicateur "Calcul en cours..."
+                                const maintenant = new Date();
+                                // 1. Trouver l'index de l'heure courante (ex: 15:00)
+                                let indexActuel = data.hourly.time.findIndex(t => new Date(t) >= maintenant);
+                                if (indexActuel === -1) indexActuel = 0; 
+                                hourlyContainer.innerHTML = ""; // On vide le conteneur avant de charger les 24h
                                 
-                                // On affiche les 12 prochaines heures de la journée
-                                for (let i = 0; i < 12; i++) {
+                                // 2. On affiche l'intégralité des 24h de la journée (en partant de 0)
+                                for (let i = 0; i < 24; i++) {
                                     if (data.hourly.time[i] === undefined) break;
-                        
+                                
                                     const heureDate = new Date(data.hourly.time[i]);
                                     const heureStr = heureDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                                     const tempH = Math.round(data.hourly.temperature_2m[i]);
                                     
-                                    // Récupération de l'icône correspondante via votre fonction existante
+                                    // Liaison dynamique avec vos icônes réelles
                                     const codeMeteoHeure = data.hourly.weather_code[i];
-                                    const icone = '☀️'; // Par défaut, ou liez-le à votre système d'icônes
-                        
+                                    const icone = typeof tracerCodeMeteo === 'function' ? (tracerCodeMeteo(codeMeteoHeure).icon || '☀️') : '☀️';
+                                
+                                    // 💡 SÉLECTION DE L'HEURE COURANTE : Est-ce qu'on est sur l'index actuel ?
+                                    const estHeureCourante = (i === indexActuel);
+                                    
+                                    // On prépare des styles spécifiques et l'ID de ciblage si c'est l'heure actuelle
+                                    const styleSpecifique = estHeureCourante 
+                                        ? 'style="font-weight: 700; background: rgba(26, 115, 232, 0.15); border: 1.5px solid var(--primary);"' 
+                                        : '';
+                                    const idSpecifique = estHeureCourante ? 'id="current-hour-item"' : '';
+                                
                                     hourlyContainer.innerHTML += `
-                                        <div class="hourly-item">
-                                            <div class="hourly-time">${heureStr}</div>
-                                            <div style="font-size: 14px; margin: 2px 0;">${icone}</div>
-                                            <div class="hourly-temp">${tempH}°</div>
+                                        <div class="hourly-item" ${idSpecifique} ${styleSpecifique}>
+                                            <div class="hourly-time" style="${estHeureCourante ? 'color: var(--primary); font-weight: 700;' : ''}">${heureStr}</div>
+                                            <div style="font-size: 16px; margin: 2px 0;">${icone}</div>
+                                            <div class="hourly-temp" style="${estHeureCourante ? 'color: #041e49;' : ''}">${tempH}°</div>
                                         </div>`;
                                 }
+                                
+                                // 3. CENTRAGE AUTOMATIQUE : On attend une fraction de seconde que le HTML soit dessiné
+                                setTimeout(() => {
+                                    const itemActuel = document.getElementById('current-hour-item');
+                                    if (itemActuel) {
+                                        itemActuel.scrollIntoView({ 
+                                            behavior: 'smooth', // Défilement fluide
+                                            block: 'nearest', 
+                                            inline: 'center'    // Centre horizontalement l'élément dans la frise
+                                        });
+                                    }
+                                }, 100);
                             }
                         } catch (errHourly) {
                             console.error("Erreur lors du rendu de la frise horaire :", errHourly);
