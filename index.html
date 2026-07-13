@@ -951,7 +951,7 @@
                 // Convertir le timestamp Unix en heure lisible locale
                 const dateFrame = new Date(frame.timestamp * 1000);
                 const heureLabel = dateFrame.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                const tagType = frame.type === 'prévision' ? ' <span style="color:#ff4757;">(Prév)</span>' : ' (Radar)';
+                const tagType = frame.type === 'prévision' ? ' <span style="color:#ff4757;">(Prév)</span>' : (frame.type === 'satellite' ? ' (Sat)' : ' (Radar)');
                 
                 document.getElementById('radar-time-label').innerHTML = `${heureLabel} ${tagType}`;
             
@@ -995,6 +995,58 @@
             function tracerCodeMeteo(c) {
                 const match = { 0:"Ciel clair", 1:"Peu nuageux", 2:"Partiellement couvert", 3:"Couvert", 45:"Brouillard", 51:"Bruine légère", 61:"Pluie faible", 63:"Pluie modérée", 80:"Averses", 95:"Orage" };
                 return match[c] || "Temps variable";
+            }
+            function togglePlayAnimation() {
+                if (isPlaying) {
+                    stopperAnimation();
+                } else {
+                    lancerAnimation();
+                }
+            }
+            
+            function lancerAnimation() {
+                isPlaying = true;
+                document.getElementById('play-stop-btn').innerText = "■ Stop";
+                document.getElementById('play-stop-btn').style.background = "#ea4335"; // Rouge pendant la lecture
+                
+                // Défilement automatique toutes les 600ms
+                animationInterval = setInterval(() => {
+                    currentFrameIndex++;
+                    // Si on arrive à la fin de la frise, on rebrousse chemin vers le début (0)
+                    if (currentFrameIndex >= radarFrames.length) {
+                        currentFrameIndex = 0;
+                    }
+                    appliquerFrameRadar();
+                }, 600);
+            }
+            
+            function stopperAnimation() {
+                isPlaying = false;
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+                
+                const btn = document.getElementById('play-stop-btn');
+                if (btn) {
+                    btn.innerText = "▶ Play";
+                    btn.style.background = "#041e49"; // Retour au bleu original
+                }
+                
+                // Ramène l'utilisateur sur l'image du temps réel actuel
+                currentFrameIndex = presentFrameIndex;
+                appliquerFrameRadar();
+            }
+            
+            // Sécurité : Si l'utilisateur clique manuellement sur ◀ ou ▶, on coupe le mode automatique
+            function changerFrameRadar(direction) {
+                if (isPlaying) stopperAnimation();
+                
+                currentFrameIndex += direction;
+                if (currentFrameIndex < 0) currentFrameIndex = 0;
+                if (currentFrameIndex >= radarFrames.length) currentFrameIndex = radarFrames.length - 1;
+                
+                appliquerFrameRadar();
             }
         </script>
     </body>
