@@ -344,104 +344,69 @@
                 fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code,wind_speed_10m,rain,relative_humidity_2m,apparent_temperature,uv_index&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&timezone=Europe%2FParis&forecast_days=10`)
                     .then(res => res.json())
                     .then(data => {
-                        if (!data || !data.current) return;
-            
-                        // MAJ Écran Principal
-                        document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
-                        document.getElementById('sub-wind').innerText = `${Math.round(data.current.wind_speed_10m)} km/h`;
-                        document.getElementById('det-humidity').innerText = `${data.current.relative_humidity_2m} %`;
-                        document.getElementById('det-apparent').innerText = `${Math.round(data.current.apparent_temperature)} °C`;
-                        document.getElementById('det-rain').innerText = `${data.current.rain} mm`;
-                        
-                        // Sécurité si l'index UV vaut 0 ou est absent
-                        const uvValue = data.current.uv_index !== undefined ? Math.round(data.current.uv_index) : 0;
-                        document.getElementById('uv-val').innerText = uvValue;
-                        
-                        // Synchronisation de la structure globale de l'application
-                        if (typeof metaoCourante !== 'undefined') {
-                            metaoCourante.temp = data.current.temperature_2m;
-                            metaoCourante.vent = data.current.wind_speed_10m;
-                            metaoCourante.humidite = data.current.relative_humidity_2m;
-                            metaoCourante.uv = uvValue;
-                        }
-            
-                        // Génération de la frise horaire (8 prochains impacts)
-                        const hourlyContainer = document.getElementById('hourly-container');
-                        if (hourlyContainer && data.hourly && data.hourly.time) { 
-                            hourlyContainer.innerHTML = "";
-                            const maintenant = new Date();
-                            let itemsAffiches = 0;
-                            const nbheuresprevision = 24;
-                            for (let i = 0; i < data.hourly.time.length; i++) {
-                                const heureData = new Date(data.hourly.time[i]);
-                                if (heureData >= maintenant || (heureData.getHours() === maintenant.getHours() && heureData.getDate() === maintenant.getDate())) {
-                                    const heureTexte = heureData.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                                    const tempHorraire = Math.round(data.hourly.temperature_2m[i]);
+                        // 1. SÉCURISATION DU BLOC ACTUEL (Évite les valeurs vides)
+                        if (data && data.current) {
+                            // Sauvegarde dans la variable globale pour les fonctions bioclimatiques
+                            metaoCourante = {
+                                temp: data.current.temperature_2m,
+                                humidite: data.current.relative_humidity_2m,
+                                vent: data.current.wind_speed_10m,
+                                uv: data.current.uv_index || 0,
+                                vigilance: "" // À ajuster selon tes autres flux
+                            };
                     
-                                    hourlyContainer.innerHTML += `
-                                        <div class="hourly-item">
-                                            <div class="hourly-time">${heureTexte}</div>
-                                            <div class="hourly-temp">${tempHorraire}°</div>
-                                        </div>`;
-                                    itemsAffiches++;
-                                    if (itemsAffiches >= nbheuresprevision) break;
-                                }
+                            // Affichage de la description météo principale
+                            const descEl = document.getElementById('weather-desc');
+                            if (descEl && typeof tracerCodeMeteo === 'function') {
+                                const descMeteo = tracerCodeMeteo(data.current.weather_code);
+                                descEl.innerText = typeof descMeteo === 'object' ? descMeteo.desc : descMeteo;
                             }
                         }
-            
-                        // Description textuelle du temps présent
-                        if (typeof tracerCodeMeteo === 'function') {
-                            const descMeteo = tracerCodeMeteo(data.current.weather_code);
-                            document.getElementById('weather-desc').innerText = typeof descMeteo === 'object' ? descMeteo.desc : descMeteo;
-                        }
-                        
+                    
+                        // Lance le calcul du ressenti sans bloquer si besoin
                         if (typeof CalculerRessentiBioclimatique === 'function') {
-                            CalculerRessentiBioclimatique();
+                            try { CalculerRessentiBioclimatique(); } catch(e) { console.error(e); }
                         }
-            
-                        // Prévisions jours J+1 à J+5
-                        const forecastContainer = document.getElementById('forecast-container'); 
-                        if (forecastContainer && data.daily && data.daily.temperature_2m_max) { 
-                            forecastContainer.innerHTML = ""; 
-                            const nbjours = 5;
-                        
-                            for (let i = 1; i <= nbjours; i++) { 
-                                if (data.daily.temperature_2m_max[i] === undefined) break;
-                                
-                                const max = Math.round(data.daily.temperature_2m_max[i]); 
-                                const min = Math.round(data.daily.temperature_2m_min[i]); 
-                                
-                                // 1. Récupération du code météo
-                                const rawDetails = typeof tracerCodeMeteo === 'function' ? tracerCodeMeteo(data.daily.weather_code[i]) : '☀️'; 
-                                
-                                // 2. Sécurisation : On extrait l'icône et le texte, que rawDetails soit un objet ou une chaîne
-                                let icone = '☀️';
-                                let description = '';
-                        
-                                if (typeof rawDetails === 'object' && rawDetails !== null) {
-                                    icone = rawDetails.icon || '☀️';
-                                    description = rawDetails.desc || '';
-                                } else {
-                                    description = rawDetails; // C'était une simple chaîne
-                                }
-                        
-                                // 3. Calcul du nom du jour (ex: "Mar.", "Mer.") au lieu de "J+1"
-                                const dateJ = new Date(data.daily.time[i]);
-                                const nomJour = dateJ.toLocaleDateString('fr-FR', { weekday: 'short' });
-                                const nomJourCapitalise = nomJour.charAt(0).toUpperCase() + nomJour.slice(1);
-                                
-                                // Injection sous forme de carte verticale (copie du modèle horaire)
-                                forecastContainer.innerHTML += `
-                                    <div class="hourly-item">
-                                        <div class="hourly-time">${nomJourCapitalise}</div>
-                                        <div style="font-size: 18px; margin: 4px 0;">${icone}</div>
-                                        <div class="hourly-temp">${max}°</div>
-                                        <div style="font-size: 11px; color: var(--text-sec); font-weight: normal;">${min}°</div>
-                                    </div>`;
-                            } 
+                    
+                        // 2. BLOC PRÉVISIONS TOTALEMENT ISOLÉ (Si ce bloc échoue, il ne bloque plus l'appli)
+                        try {
+                            const forecastContainer = document.getElementById('forecast-container'); 
+                            if (forecastContainer && data.daily && data.daily.temperature_2m_max) { 
+                                forecastContainer.innerHTML = ""; 
+                                const nbjours = 10; 
+                    
+                                for (let i = 1; i <= nbjours; i++) { 
+                                    // Double sécurité sur les tableaux de l'API
+                                    if (!data.daily.time || data.daily.time[i] === undefined || data.daily.temperature_2m_max[i] === undefined) {
+                                        break;
+                                    }
+                                    
+                                    const max = Math.round(data.daily.temperature_2m_max[i]); 
+                                    const min = Math.round(data.daily.temperature_2m_min[i]); 
+                                    
+                                    const rawDetails = typeof tracerCodeMeteo === 'function' ? tracerCodeMeteo(data.daily.weather_code[i]) : '☀️'; 
+                                    let icone = '☀️';
+                                    if (typeof rawDetails === 'object' && rawDetails !== null) {
+                                        icone = rawDetails.icon || '☀️';
+                                    }
+                    
+                                    const dateJ = new Date(data.daily.time[i]);
+                                    const nomJour = dateJ.toLocaleDateString('fr-FR', { weekday: 'short' });
+                                    const nomJourCapitalise = nomJour.charAt(0).toUpperCase() + nomJour.slice(1);
+                                    
+                                    forecastContainer.innerHTML += `
+                                        <div class="hourly-item">
+                                            <div class="hourly-time">${nomJourCapitalise}</div>
+                                            <div style="font-size: 18px; margin: 4px 0;">${icone}</div>
+                                            <div class="hourly-temp">${max}°</div>
+                                            <div style="font-size: 11px; color: var(--text-sec); font-weight: normal;">${min}°</div>
+                                        </div>`; 
+                                } 
+                            }
+                        } catch (errForecast) {
+                            console.error("Erreur lors du rendu du slider des prévisions :", errForecast);
                         }
                     }).catch(err => console.error("Erreur Open-Meteo:", err));
-            
                 // 2. Flux Open Data Nantes Métropole (Uniquement actif si Nantes est sélectionnée)
                 if (vKey === "nantes") {
                     fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?limit=100`)
