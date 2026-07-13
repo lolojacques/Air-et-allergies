@@ -337,6 +337,7 @@
             }
 
             function executerRequetesBackground(vKey) {
+                window.allergenesActifsDetectes = [];
                 const geo = CITIES[vKey] || { lat: 47.2184, lon: -1.5536, codeInsee: "44109", name: "Nantes" };
                 // CORRECTION : S'assurer que la clé globale de la ville courante est à jour pour l'arbitrage
                 currentCityKey = vKey; 
@@ -348,6 +349,16 @@
                     .then(data => {
                         // 1. SÉCURISATION DU BLOC ACTUEL (Évite les valeurs vides)
                         if (data && data.current) {
+                            // update données à jour
+                            document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
+                            document.getElementById('sub-wind').innerText = `${data.current.wind_speed_10m} km/h`;
+                            document.getElementById('det-humidity').innerText = `${data.current.relative_humidity_2m} %`;
+                            document.getElementById('uv-val').innerText = data.current.uv_index || 0;
+                            document.getElementById('weather-desc').innerText = tracerCodeMeteo(data.current.weather_code);
+                            // ressenti thermique 
+                            document.getElementById('det-apparent').innerText = `${Math.round(data.current.apparent_temperature)} °C`;
+                            document.getElementById('det-rain').innerText = `${data.current.rain} mm`;
+                            CalculerRessentiBioclimatique();
                             // Sauvegarde dans la variable globale pour les fonctions bioclimatiques
                             metaoCourante = {
                                 temp: data.current.temperature_2m,
@@ -356,13 +367,6 @@
                                 uv: data.current.uv_index || 0,
                                 vigilance: "" // À ajuster selon tes autres flux
                             };
-                            // update données à jour
-                            document.getElementById('main-temp').innerText = `${Math.round(data.current.temperature_2m)}°C`;
-                            document.getElementById('sub-wind').innerText = `${data.current.wind_speed_10m} km/h`;
-                            document.getElementById('det-humidity').innerText = `${data.current.relative_humidity_2m} %`;
-                            document.getElementById('uv-val').innerText = data.current.uv_index || 0;
-                            document.getElementById('weather-desc').innerText = tracerCodeMeteo(data.current.weather_code);
-                            
                             // Affichage de la description météo principale
                             const descEl = document.getElementById('weather-desc');
                             if (descEl && typeof tracerCodeMeteo === 'function') {
@@ -477,18 +481,28 @@
                             if (data && data.results) {
                                 const debugEl = document.getElementById('debug-nantes');
                                 if (debugEl) debugEl.innerText = JSON.stringify(data.results, null, 2);
-                                
                                 data.results.forEach(rec => {
-                                    const taxon = (rec.group || rec.name || rec.pollen || "").toLowerCase();
+                                    const nomAllergene = rec.name || rec.pollen || rec.group || "";
+                                    const taxon = nomAllergene.toLowerCase();
                                     const state = parseInt(rec.state, 10);
-                                    // Transmission au scrutin (Conversion : état local 1 = Risque Élevé 4, sinon 0)
-                                    if (taxon.includes("bouleau")) fusionnerEtVoter("OpenData Nantes", "bouleau", state === 1 ? 4 : 0);
-                                    if (taxon.includes("gramin")) fusionnerEtVoter("OpenData Nantes", "graminees", state === 1 ? 4 : 0);
+                                    
+                                    // Si l'allergène est détecté "En cours" (1), on l'ajoute à notre liste globale pour le zoom
+                                    if (state === 1) {
+                                        window.allergenesActifsDetectes.push({ nom: nomAllergene, source: "Open Data Nantes" });
+                                    }
+                                    
+                                    // Traitement du scrutin centralisé
+                                    if (taxon.includes("bouleau")) {
+                                        fusionnerEtVoter("OpenData Nantes", "bouleau", state === 1 ? 4 : 0);
+                                    }
+                                    // FIX : Inclusion de la Fléole dans la grande famille des Graminées
+                                    if (taxon.includes("gramin") || taxon.includes("fléole") || taxon.includes("fleole")) {
+                                        fusionnerEtVoter("OpenData Nantes", "graminees", state === 1 ? 4 : 0);
+                                    }
                                 });
                             }
                         }).catch(err => console.warn("Capteur Nantes Métropole indisponible:", err));
                 }
-                // AJOUT à l'intérieur de executerRequetesBackground :
                 fetch(`https://alerts.open-meteo.com/v1/alerts?latitude=${geo.lat}&longitude=${geo.lon}&timezone=Europe%2FParis`)
                     .then(res => res.json())
                     .then(alertData => {
@@ -538,6 +552,9 @@
                             
                             if (ecosanteData.data.pollen && ecosanteData.data.pollen.species) {
                                 ecosanteData.data.pollen.species.forEach(sp => {
+                                    if (sp.value >= 1) { // Niveau supérieur à 0 = actif
+                                        window.allergenesActifsDetectes.push({ nom: sp.label, source: "Éco-Santé National" });
+                                    }
                                     const label = sp.label.toLowerCase();
                                     if (label.includes("bouleau")) fusionnerEtVoter("Éco-Santé National", "bouleau", sp.value);
                                     if (label.includes("gramin")) fusionnerEtVoter("Éco-Santé National", "graminees", sp.value);
@@ -572,15 +589,16 @@
                 Object.keys(scrutinPollens).forEach(taxon => {
                     const listeVotes = scrutinPollens[taxon].votes;
                     if (!listeVotes || listeVotes.length === 0) return;
-            
+                
                     const voteTerrain = listeVotes.find(v => v.source === "OpenData Nantes");
                     
-                    // CORRECTION : Utilisation de la variable globale synchronisée au début de la fonction
                     if (voteTerrain && currentCityKey === "nantes") {
                         scrutinPollens[taxon].retenu = voteTerrain.valeur;
+                        scrutinPollens[taxon].sourceElue = "📍 Capteur de Terrain Souverain (Nantes Métropole)";
                     } else {
                         const somme = listeVotes.reduce((acc, curr) => acc + curr.valeur, 0);
                         scrutinPollens[taxon].retenu = Math.round(somme / listeVotes.length);
+                        scrutinPollens[taxon].sourceElue = "Consensus National (Moyenne Algorithmique)";
                     }
                 });
                 
@@ -643,8 +661,30 @@
                     debugTxt += scrutinPollens[t].votes.map(v => `${v.source}:${v.valeur}`).join(", ");
                     debugTxt += "]\n";
                 });
+                // Remplacez la fin de la fonction appliquerArbitrageGraphique par ce bloc de rendu :
                 const debugEl = document.getElementById('debug-arbitrage');
-                if (debugEl) debugEl.innerText = debugTxt;
+                if (debugEl) {
+                    let htmlZoom = `<div style="margin-bottom: 8px; color: #041e49;"><b>🗳️ Sources d'arbitrage élues :</b><br>`;
+                    htmlZoom += `• Bouleau : <i>${scrutinPollens.bouleau.sourceElue || 'Saisonnière'}</i><br>`;
+                    htmlZoom += `• Graminées : <i>${scrutinPollens.graminees.sourceElue || 'Saisonnière'}</i></div>`;
+                    htmlZoom += `<div style="margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 6px; color: #c5221f;"><b>🚨 Tous les allergènes actifs "En Cours" :</b><br>`;
+                    
+                    if (window.allergenesActifsDetectes && window.allergenesActifsDetectes.length > 0) {
+                        // Filtrer les doublons pour l'affichage
+                        const vus = new Set();
+                        window.allergenesActifsDetectes.forEach(all => {
+                            const cle = `${all.nom.toLowerCase()}`;
+                            if (!vus.has(cle)) {
+                                vus.add(cle);
+                                htmlZoom += `⚠️ <span style="text-transform: capitalize;">${all.nom}</span> <small style="color:var(--text-sec);">(${all.source})</small><br>`;
+                            }
+                        });
+                    } else {
+                        htmlZoom += `<span style="color:var(--text-sec); font-style:italic;">Aucun autre allergène critique signalé.</span>`;
+                    }
+                    htmlZoom += `</div>`;
+                    debugEl.innerHTML = htmlZoom;
+                }
             
                 analyserFacteursBioclimatiques();
             }
@@ -823,10 +863,13 @@
                                 data.radar.nowcast.forEach(f => radarFrames.push({ timestamp: f.time, path: f.path, type: 'prévision' }));
                             }
                             currentFrameIndex = (data.radar && data.radar.past) ? data.radar.past.length - 1 : 0;
-                        } else if (mapMode === 'nasa') {
-                            // MODE SATELLITE ANIMÉ : Données infrarouges de RainViewer
-                            if (data.satellite && data.satellite.infrared) {
-                                data.satellite.infrared.forEach(f => radarFrames.push({ timestamp: f.time, path: f.path, type: 'satellite' }));
+                        } else if (mapMode === 'nasa') { // historique des 5 derniers jours
+                            radarFrames = [];
+                            for (let i = 5; i >= 1; i--) {
+                                const d = new Date();
+                                d.setDate(d.getDate() - i);
+                                const dateStr = d.toISOString().split('T')[0];
+                                radarFrames.push({ timestamp: d.getTime() / 1000, path: dateStr, type: 'satellite_nasa' });
                             }
                             currentFrameIndex = radarFrames.length - 1;
                         }
@@ -957,17 +1000,23 @@
             
                 // MI S À JOUR DE LA CARTE (Exemple type avec Leaflet)
                 // Si tu utilises Leaflet, adapte cette portion à ton code de carte actuel :
-                if (typeof map !== 'undefined') { 
-                    // Supprimer l'ancienne couche si elle existe
-                    if (radarTileLayer) map.removeLayer(radarTileLayer);
-                    
-                    // Créer la nouvelle couche de tuiles avec le "path" spécifique de la frame choisie
-                    const urlTuile = `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/1/1_1.png`;
-                    
-                    // Exemple Leaflet :
-                    radarTileLayer = L.tileLayer(urlTuile, { opacity: 0.65 });
-                    radarTileLayer.addTo(map);
-                }
+                if (typeof map !== 'undefined' && map !== null) { 
+                   if (radarTileLayer && map.hasLayer(radarTileLayer)) map.removeLayer(radarTileLayer); 
+                   if (frame.type === 'satellite_nasa') {
+                       // Libellé de date NASA
+                       document.getElementById('radar-time-label').innerHTML = `${frame.path} (Sat NASA)`;
+                       // Instanciation du flux WMTS NASA GIBS pour la date spécifique
+                       radarTileLayer = L.tileLayer(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${frame.path}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`, { opacity: 0.85, maxNativeZoom: 9 });
+                   } else {
+                       // Flux RainViewer (Pluie)
+                       const urlTuile = `${rainViewerHost}${frame.path}/256/{z}/{x}/{y}/1/1_1.png`;
+                       radarTileLayer = L.tileLayer(urlTuile, { opacity: 0.65 });
+                   }
+                   
+                   if (mapMode === 'radar_rv' || mapMode === 'nasa') {
+                       radarTileLayer.addTo(map);
+                   }
+               }
             }
             
             function changerFrameRadar(direction) {
