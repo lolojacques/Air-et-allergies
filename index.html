@@ -419,15 +419,14 @@
                                 const nomJour = dateJ.toLocaleDateString('fr-FR', { weekday: 'short' });
                                 const nomJourCapitalise = nomJour.charAt(0).toUpperCase() + nomJour.slice(1);
                                 
-                                // 4. Injection HTML
+                                // Injection sous forme de carte verticale (copie du modèle horaire)
                                 forecastContainer.innerHTML += `
-                                    <div class="forecast-day" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                        <span style="width: 45px; font-weight: 500;">${nomJourCapitalise}</span>
-                                        <span style="margin-right: 8px;">${icone}</span>
-                                        <span style="flex-grow: 1; font-size: 12px; color: var(--text-sec); text-align: left;">${description}</span>
-                                        <span style="font-weight: 600; margin-right: 8px;">${max}°</span>
-                                        <span style="color: var(--text-sec);">${min}°</span>
-                                    </div>`; 
+                                    <div class="forecast-item" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-width: 65px; padding: 8px; text-align: center;">
+                                        <div class="forecast-time" style="font-size: 13px; font-weight: 500; margin-bottom: 4px;">${nomJourCapitalise}</div>
+                                        <div class="forecast-icon" style="font-size: 20px; margin-bottom: 6px;" title="${description}">${icone}</div>
+                                        <div class="forecast-temp" style="font-size: 14px; font-weight: 600;">${max}°</div>
+                                        <div class="forecast-temp-min" style="font-size: 11px; color: var(--text-sec);">${min}°</div>
+                                    </div>`;
                             } 
                         }
                     }).catch(err => console.error("Erreur Open-Meteo:", err));
